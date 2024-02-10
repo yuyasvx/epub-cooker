@@ -1,11 +1,12 @@
 import { program } from "commander";
 import { container } from "tsyringe";
-import { CommandOption, options } from "../command/CommandOptions";
-import { CookCommand, CookCommandPrototype } from "../command/CookCommand";
+import { options } from "../command/CommandOptions";
+import { CookCommand } from "../command/CookCommand";
+import { NewCommand } from "../command/NewCommand";
 import { AppCommand } from "../domain/prototype/Command";
 
 // 重要：AppCommandを実装したらcommandsに登録しないといけません
-const commands = [container.resolve(CookCommandPrototype), container.resolve(CookCommand)] as AppCommand[];
+const commands = [container.resolve(CookCommand), container.resolve(NewCommand)] as AppCommand[];
 
 export function loadCommands() {
   for (const c of commands) {
