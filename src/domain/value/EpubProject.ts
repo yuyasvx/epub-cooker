@@ -1,26 +1,29 @@
 import { Case } from "../enums/Case";
+import { ItemSortType } from "../enums/ItemSortType";
 import { PageProgression } from "../enums/PageProgression";
 import { PageType } from "../enums/PageType";
 import { BookMetadata } from "./BookMetadata";
 
-export class EpubProject {
-  constructor(
-    public version: number,
-    public bookMetadata: Readonly<BookMetadata>,
-    public additionalMetadata: Readonly<AdditionalMetadata>[],
-    public itemSource: string,
-    public identifier: string | undefined,
-    public pageProgression: Case<typeof PageProgression>,
-    public useSpecifiedFonts: boolean,
-    public sourcePath: string,
-    public pageType: Case<typeof PageType>,
-  ) {}
-}
+export type EpubProject = Readonly<{
+  version: number;
+  bookMetadata: BookMetadata;
+  additionalMetadata: AdditionalMetadata[];
+  itemSource: string;
+  identifier?: string;
+  pageProgression: Case<typeof PageProgression>;
+  useSpecifiedFonts: boolean;
+  sourcePath: string;
+  pageType: Case<typeof PageType>;
+  parseMarkdown: boolean;
+  autoExclusion: boolean;
+  itemSortType: Case<typeof ItemSortType>;
+  tocFilePath?: string;
+}>;
 
-export interface AdditionalMetadata {
+export type AdditionalMetadata<V = unknown> = Readonly<{
   key: string;
-  value: unknown;
-}
+  value: V;
+}>;
 
 export function validate(data: unknown): data is EpubProject {
   if (typeof data !== "object") {
@@ -41,7 +44,8 @@ export function validate(data: unknown): data is EpubProject {
   return true;
 }
 
-export function createFromParsedYaml(data: Record<string, unknown>): Readonly<EpubProject> {
+export function createFromParsedYaml(data: Record<string, unknown>): EpubProject {
+  const pageItemObject = data["page-item"] as Record<string, unknown>;
   return {
     version: data.version as number,
     bookMetadata: data["book-metadata"] as BookMetadata,
@@ -50,7 +54,11 @@ export function createFromParsedYaml(data: Record<string, unknown>): Readonly<Ep
     identifier: data.identifier as string | undefined,
     pageProgression: (data["page-progression-direction"] as Case<typeof PageProgression>) ?? PageProgression.LTR,
     useSpecifiedFonts: (data["use-specified-fonts"] as boolean) ?? false,
-    sourcePath: data["item-source-path"] as string,
-    pageType: data["page-type"] as Case<typeof PageType>,
+    sourcePath: pageItemObject["source-path"] as string,
+    pageType: pageItemObject.type as Case<typeof PageType>,
+    parseMarkdown: (data["parse-markdown"] as boolean) ?? true,
+    autoExclusion: (data["auto-exclusion"] as boolean) ?? true,
+    itemSortType: (pageItemObject["sort-type"] as Case<typeof ItemSortType>) ?? ItemSortType.STRING,
+    tocFilePath: pageItemObject.toc as string,
   };
 }

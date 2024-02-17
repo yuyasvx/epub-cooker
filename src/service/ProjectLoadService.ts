@@ -13,7 +13,7 @@ export class ProjectLoadService {
    * ディレクトリを指定してプロジェクトを読み込み
    * @param resolvedPath ディレクトリのパス(resolveで解決させておくこと)
    */
-  public async loadFromDirectory(resolvedPath: string): Promise<Readonly<EpubProject>> {
+  public async loadFromDirectory(resolvedPath: string): Promise<EpubProject> {
     const projectFileName = await this.decideFileName(resolvedPath);
     if (projectFileName == null) {
       throw new Error("PROJECT_NOT_FOUND");
