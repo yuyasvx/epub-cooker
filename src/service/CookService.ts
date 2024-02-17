@@ -2,33 +2,55 @@ import { readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { singleton } from "tsyringe";
 import { v4 } from "uuid";
+import { EpubContext } from "../domain/data/EpubContext";
+import { ItemSortType } from "../domain/enums/ItemSortType";
 import { EpubProject } from "../domain/value/EpubProject";
 import { asyncTryOrNothing } from "../util/TryOrNothing";
 import { ContainerXml } from "../xml-resource/ContainerXml";
 import { IBooksDisplayOptionsXml } from "../xml-resource/IBooksDisplayOptionsXml";
 import { PackageOpfXml } from "../xml-resource/PackageOpfXml";
+import { ArchiveService } from "./ArchiveService";
+import { FileCopyService } from "./FileCopyService";
 import { ResourceWriteService } from "./ResourceWriteService";
+import { SpineService } from "./SpineService";
+import { TocService } from "./TocService";
 
 const WORKING_DIERCTORY_NAME = ".working";
 
 @singleton()
 export class CookService {
-  constructor(private resourceWriteService: ResourceWriteService) {}
+  constructor(
+    private resourceWriteService: ResourceWriteService,
+    private fileCopyService: FileCopyService,
+    private spineService: SpineService,
+    private archiveService: ArchiveService,
+    private tocService: TocService,
+  ) {}
 
   public async cook(directory: string, project: EpubProject) {
-    const workingDir = resolve(directory, WORKING_DIERCTORY_NAME);
-    const identifier = await this.identify(directory, project);
+    const context = await this.createContext(directory, project);
+    await this.tocService.validate(context, project);
+    await this.resourceWriteService.saveResource(context, project);
+    return this.archiveService.makeEpubArchive(
+      context.workingDirecotry,
+      context.projectDirectory,
+      project.bookMetadata.title,
+    );
+  }
 
-    const containerXml = new ContainerXml();
-    const displayOptionsXml = new IBooksDisplayOptionsXml();
-    displayOptionsXml.setSpecifiedFonts(project.useSpecifiedFonts);
-    const packageOpf = PackageOpfXml.of(project, identifier);
+  protected async createContext(directory: string, project: EpubProject) {
+    const ctx: EpubContext = {
+      projectDirectory: directory,
+      workingDirecotry: resolve(directory, WORKING_DIERCTORY_NAME),
+      identifier: await this.identify(directory, project),
+      loadedItems: [],
+      spineItems: [],
+    };
+    ctx.loadedItems = await this.fileCopyService.loadAndCopy(ctx.projectDirectory, ctx.workingDirecotry, project);
+    // TODO ItemSortTypeをベタ指定
+    ctx.spineItems = this.spineService.sortItems(ctx.loadedItems, ItemSortType.STRING);
 
-    return Promise.all([
-      this.resourceWriteService.save(workingDir, containerXml),
-      this.resourceWriteService.save(workingDir, displayOptionsXml),
-      this.resourceWriteService.save(workingDir, packageOpf),
-    ]);
+    return ctx;
   }
 
   /**
@@ -44,7 +66,7 @@ export class CookService {
    * @param project プロジェクト定義
    * @returns ブックのID
    */
-  public async identify(directory: string, project: EpubProject) {
+  protected async identify(directory: string, project: EpubProject) {
     const projectIdentifier = project.identifier;
     if (projectIdentifier != null) {
       return projectIdentifier;
