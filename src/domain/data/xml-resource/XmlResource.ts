@@ -1,5 +1,5 @@
 import xml2js from "xml2js";
-import { MarkupDefinition } from "../domain/prototype/MarkupDefinition";
+import { MarkupDefinition } from "../../prototype/MarkupDefinition";
 
 export abstract class XmlResource {
   abstract readonly path: string;

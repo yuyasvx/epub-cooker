@@ -3,7 +3,7 @@ import { SpineItems } from "../value/SpineItem";
 
 export type EpubContext = {
   projectDirectory: string;
-  workingDirecotry: string;
+  workingDirectory: string;
   identifier: string;
   loadedItems: ManifestItem[];
   spineItems: SpineItems[];

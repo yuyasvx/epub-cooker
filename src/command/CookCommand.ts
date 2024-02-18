@@ -33,6 +33,7 @@ export class CookCommand implements AppCommand {
       await this.cookService.cook(projectDirectory, proj);
     } catch (error) {
       console.log("プロジェクトの読み込みに失敗しました");
+      console.error(error);
       // TODO プロジェクトの読み込みに成功しても、後続処理が失敗したら多分ここに飛ぶ
     } finally {
       if (projectLoaded) {

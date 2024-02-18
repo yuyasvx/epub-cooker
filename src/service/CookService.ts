@@ -6,10 +6,8 @@ import { EpubContext } from "../domain/data/EpubContext";
 import { ItemSortType } from "../domain/enums/ItemSortType";
 import { EpubProject } from "../domain/value/EpubProject";
 import { asyncTryOrNothing } from "../util/TryOrNothing";
-import { ContainerXml } from "../xml-resource/ContainerXml";
-import { IBooksDisplayOptionsXml } from "../xml-resource/IBooksDisplayOptionsXml";
-import { PackageOpfXml } from "../xml-resource/PackageOpfXml";
 import { ArchiveService } from "./ArchiveService";
+import { ArtworkService } from "./ArtworkService";
 import { FileCopyService } from "./FileCopyService";
 import { ResourceWriteService } from "./ResourceWriteService";
 import { SpineService } from "./SpineService";
@@ -25,14 +23,16 @@ export class CookService {
     private spineService: SpineService,
     private archiveService: ArchiveService,
     private tocService: TocService,
+    private artworkService: ArtworkService,
   ) {}
 
   public async cook(directory: string, project: EpubProject) {
     const context = await this.createContext(directory, project);
     await this.tocService.validate(context, project);
-    await this.resourceWriteService.saveResource(context, project);
+    await this.artworkService.validate(context, project);
+    await this.resourceWriteService.saveResources(context, project);
     return this.archiveService.makeEpubArchive(
-      context.workingDirecotry,
+      context.workingDirectory,
       context.projectDirectory,
       project.bookMetadata.title,
     );
@@ -41,12 +41,12 @@ export class CookService {
   protected async createContext(directory: string, project: EpubProject) {
     const ctx: EpubContext = {
       projectDirectory: directory,
-      workingDirecotry: resolve(directory, WORKING_DIERCTORY_NAME),
+      workingDirectory: resolve(directory, WORKING_DIERCTORY_NAME),
       identifier: await this.identify(directory, project),
       loadedItems: [],
       spineItems: [],
     };
-    ctx.loadedItems = await this.fileCopyService.loadAndCopy(ctx.projectDirectory, ctx.workingDirecotry, project);
+    ctx.loadedItems = await this.fileCopyService.execute(ctx, project); // await this.fileCopyService.loadAndCopy(ctx.projectDirectory, ctx.workingDirectory, project);
     // TODO ItemSortTypeをベタ指定
     ctx.spineItems = this.spineService.sortItems(ctx.loadedItems, ItemSortType.STRING);
 
@@ -79,7 +79,7 @@ export class CookService {
     }
 
     const uuid = `urn:uuid:${v4()}`;
-    writeFile(resolve(directory, "identifier"), uuid);
+    await writeFile(resolve(directory, "identifier"), uuid);
     return uuid;
   }
 

@@ -4,13 +4,13 @@ import { singleton } from "tsyringe";
 import { EpubContext } from "../domain/data/EpubContext";
 import { EpubProject } from "../domain/value/EpubProject";
 import { ManifestItem } from "../domain/value/ManifestItem";
-import { MarkdownParseService } from "./MarkdownParseService";
 import { ResourceWriteService } from "./ResourceWriteService";
+import { XhtmlService } from "./XhtmlService";
 
 @singleton()
 export class TocService {
   constructor(
-    private markdownParseService: MarkdownParseService,
+    private xhtmlService: XhtmlService,
     private resourceWriteService: ResourceWriteService,
   ) {}
   /**
@@ -18,14 +18,15 @@ export class TocService {
    *
    * - 確認できた場合は、該当のManifestItem.propertiesに`nav`を書き込みます。
    * - 確認できなかった場合は、空のXHTMLファイルを"toc.xhtml"として保存し、それを目次として使用します。
-   * @param context
-   * @param project
+   *
+   * @param context コンテキスト
+   * @param project プロジェクト定義
    */
   public async validate(context: EpubContext, project: EpubProject) {
     const filePath = project.tocFilePath;
 
     if (filePath == null) {
-      const tocItem = await this.handleNoTocDefinitionError(context.workingDirecotry, undefined);
+      const tocItem = await this.handleNoTocDefinitionError(context.workingDirectory, undefined);
       context.loadedItems.push(tocItem);
       return;
     }
@@ -33,7 +34,7 @@ export class TocService {
     const targetToc = context.loadedItems.find((itm) => itm.href === filePath);
 
     if (targetToc == null) {
-      const tocItem = await this.handleNoTocDefinitionError(context.workingDirecotry, filePath);
+      const tocItem = await this.handleNoTocDefinitionError(context.workingDirectory, filePath);
       context.loadedItems.push(tocItem);
       return;
     }
@@ -54,10 +55,14 @@ export class TocService {
     if (filePath == null) {
       console.log("目次が定義されていません。");
     }
-    const emptyHtml = this.markdownParseService.markdownToHtml(`<nav epub:type="toc" id="toc" />`);
+    const emptyHtml = this.xhtmlService.markdownToHtml(`<nav epub:type="toc" id="toc" />`);
+
     // TODO 悲しいベタ書き
     const fullPath = resolve(workingDirecotry, "OPS/toc.xhtml");
-    await this.resourceWriteService.saveTextFile(this.markdownParseService.htmlToXhtml(emptyHtml), fullPath);
+    await this.resourceWriteService.saveTextFile(
+      this.xhtmlService.toXhtmlString(this.xhtmlService.getDom(emptyHtml)),
+      fullPath,
+    );
     return {
       // TODO DRY
       href: "toc.xhtml",

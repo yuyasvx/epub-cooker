@@ -49,7 +49,8 @@ export class DocumentItemLoader {
     if (!dirent.isDirectory() && isIncluded(directory, dirent.name, fileTypes, includedRules, excludedRules)) {
       this._items.push({
         href: join(directory, dirent.name),
-        id: crypto.createHash("sha1").update(join(directory, dirent.name)).digest("hex"),
+        // id: crypto.createHash("sha1").update(join(directory, dirent.name)).digest("hex"),
+        id: Buffer.from(join(directory, dirent.name)).toString("base64"),
         mediaType: mime.lookup(dirent.name) as string,
       });
     }

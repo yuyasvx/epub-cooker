@@ -26,7 +26,9 @@ export class ArchiveService {
       name: "mimetype",
     });
     archive.glob("OPS/*", { cwd: resolvePath(sourceDirectory) });
+    archive.glob("OPS/**/*", { cwd: resolvePath(sourceDirectory) });
     archive.glob("META-INF/*", { cwd: resolvePath(sourceDirectory) });
+    archive.glob("META-INF/**/*", { cwd: resolvePath(sourceDirectory) });
     archive.pipe(output);
     return archive.finalize();
   }

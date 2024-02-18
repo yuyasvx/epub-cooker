@@ -8,14 +8,14 @@ const domParser_ = new DOMParser();
 const xmlSerializer_ = new XMLSerializer();
 
 @singleton()
-export class MarkdownParseService {
+export class XhtmlService {
   protected domParser: DOMParser = domParser_;
   protected xmlSerializer: XMLSerializer = xmlSerializer_;
 
-  public async parseFile(filePath: string) {
+  public async parseMarkdown(filePath: string) {
     const rawText = (await readFile(filePath)).toString();
     const htmlText = this.markdownToHtml(rawText);
-    return this.htmlToXhtml(htmlText);
+    return this.getDom(htmlText);
   }
 
   public markdownToHtml(markdownText: string, title = "") {
@@ -27,8 +27,22 @@ ${md.render(markdownText)}
 </html>`;
   }
 
-  public htmlToXhtml(htmlText: string) {
-    const parsedData = this.domParser.parseFromString(htmlText, "text/html");
-    return `<?xml version="1.0" encoding="UTF-8"?>${this.xmlSerializer.serializeToString(parsedData)}`;
+  public toXhtmlString(dom: Document) {
+    return `<?xml version="1.0" encoding="UTF-8"?>${this.xmlSerializer.serializeToString(dom)}`;
+  }
+
+  public getDom(htmlText: string) {
+    return this.domParser.parseFromString(htmlText, "text/html");
+  }
+
+  public addCssLink(dom: Document, resolvedCssPath: string) {
+    const linkTag = dom.createElement("link");
+    linkTag.setAttribute("rel", "stylesheet");
+    linkTag.setAttribute("href", resolvedCssPath);
+
+    const headTag = dom.getElementsByTagName("head").item(0);
+    if (headTag != null) {
+      headTag.appendChild(linkTag);
+    }
   }
 }
