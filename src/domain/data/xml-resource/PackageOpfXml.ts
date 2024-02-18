@@ -1,9 +1,9 @@
-import { Case } from "../domain/enums/Case";
-import { PageProgression } from "../domain/enums/PageProgression";
-import { AdditionalMetadata, EpubProject } from "../domain/value/EpubProject";
-import { ManifestItem } from "../domain/value/ManifestItem";
-import { SpineItems } from "../domain/value/SpineItem";
-import { getFormattedDateTime } from "../util/FormattedDateTime";
+import { getFormattedDateTime } from "../../../util/FormattedDateTime";
+import { Case } from "../../enums/Case";
+import { PageProgression } from "../../enums/PageProgression";
+import { AdditionalMetadata, EpubProject } from "../../value/EpubProject";
+import { ManifestItem } from "../../value/ManifestItem";
+import { SpineItems } from "../../value/SpineItem";
 import { XmlResource } from "./XmlResource";
 
 type MetadataEntry<V = unknown> = Readonly<{

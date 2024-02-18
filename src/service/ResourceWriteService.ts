@@ -1,11 +1,11 @@
 import { resolve as resolvePath } from "path";
 import { mkdir, readdir, writeFile } from "fs/promises";
 import { EpubContext } from "../domain/data/EpubContext";
+import { ContainerXml } from "../domain/data/xml-resource/ContainerXml";
+import { IBooksDisplayOptionsXml } from "../domain/data/xml-resource/IBooksDisplayOptionsXml";
+import { PackageOpfXml } from "../domain/data/xml-resource/PackageOpfXml";
+import { XmlResource } from "../domain/data/xml-resource/XmlResource";
 import { EpubProject } from "../domain/value/EpubProject";
-import { ContainerXml } from "../xml-resource/ContainerXml";
-import { IBooksDisplayOptionsXml } from "../xml-resource/IBooksDisplayOptionsXml";
-import { PackageOpfXml } from "../xml-resource/PackageOpfXml";
-import { XmlResource } from "../xml-resource/XmlResource";
 
 export class ResourceWriteService {
   /**
@@ -14,8 +14,7 @@ export class ResourceWriteService {
    * @param context コンテキスト
    * @param project プロジェクト定義
    */
-  public async saveResource(context: EpubContext, project: EpubProject) {
-    // TODO Save Resources です
+  public async saveResources(context: EpubContext, project: EpubProject) {
     const containerXml = new ContainerXml();
     const displayOptionsXml = new IBooksDisplayOptionsXml();
     displayOptionsXml.setSpecifiedFonts(project.useSpecifiedFonts);
@@ -27,9 +26,9 @@ export class ResourceWriteService {
     packageOpf.updateModifiedDateTime();
 
     await Promise.all([
-      this.save(context.workingDirecotry, containerXml),
-      this.save(context.workingDirecotry, displayOptionsXml),
-      this.save(context.workingDirecotry, packageOpf),
+      this.save(context.workingDirectory, containerXml),
+      this.save(context.workingDirectory, displayOptionsXml),
+      this.save(context.workingDirectory, packageOpf),
     ]);
   }
 
@@ -55,11 +54,12 @@ export class ResourceWriteService {
    * @param fullPath 保存先のフルパス
    * @param skipCheck trueにすると保存先のディレクトリ存在チェックをスキップします。
    */
-  public async saveTextFile(rawText: string, fullPath: string, skipCheck = false) {
+  public async saveTextFile(rawText: string, fullPath: string, skipCheck = false): Promise<void> {
     if (!skipCheck && !(await this.checkExistence(fullPath))) {
       await mkdir(resolvePath(fullPath, "../"), { recursive: true });
     }
-    writeFile(fullPath, rawText);
+    await writeFile(fullPath, rawText);
+    return;
   }
 
   /**
@@ -68,7 +68,7 @@ export class ResourceWriteService {
    */
   public async createDestinationDirectory(destination: string) {
     if (!(await this.checkExistence(destination))) {
-      mkdir(resolvePath(destination, "../"), { recursive: true });
+      await mkdir(resolvePath(destination, "../"), { recursive: true });
     }
   }
 

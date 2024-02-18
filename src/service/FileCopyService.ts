@@ -1,13 +1,14 @@
-import { resolve } from "path";
+import { join, relative, resolve } from "path";
 import { copyFile, writeFile } from "fs/promises";
 import mime from "mime-types";
 import { singleton } from "tsyringe";
+import { EpubContext } from "../domain/data/EpubContext";
 import { DocumentItemLoader } from "../domain/data/ManifestItemLoader";
 import { PageType } from "../domain/enums/PageType";
 import { EpubProject } from "../domain/value/EpubProject";
 import { ManifestItem } from "../domain/value/ManifestItem";
-import { MarkdownParseService } from "./MarkdownParseService";
 import { ResourceWriteService } from "./ResourceWriteService";
+import { XhtmlService } from "./XhtmlService";
 
 const OPS_DIRECTORY_NAME = "OPS";
 
@@ -35,33 +36,46 @@ const SUPPORTED_DOCUMENTS = [
 export class FileCopyService {
   constructor(
     private resourceWriteService: ResourceWriteService,
-    private markdownParseService: MarkdownParseService,
+    private xhtmlService: XhtmlService,
   ) {}
+
   /**
-   * アイテムの読み込みとコピーを行います。
+   * プロジェクト定義で指定されたディレクトリのファイルを読み込み、作業ディレクトリへのコピーやXHTML変換を行います。
    *
-   * @param directory プロジェクトディレクトリ
-   * @param workingDirectory 作業ィレクトリ(.workingを想定)
+   * @param context コンテキスト
    * @param project プロジェクト定義
-   * @param packageOpf Package.opfの元になるやつ（Modifyします）
-   * @returns 更新済みのpackageOpf
+   * @returns 読み込んだアイテム
    */
-  public async loadAndCopy(directory: string, workingDirectory: string, project: EpubProject) {
-    const sourceDirectory = resolve(directory, project.sourcePath);
-    const destination = resolve(workingDirectory, OPS_DIRECTORY_NAME);
-    const newItems: ManifestItem[] = [];
+  public async execute(context: EpubContext, project: EpubProject): Promise<ManifestItem[]> {
+    // project.ymlの置き場所が/path/to/project、データの置き場所がitem-path/の場合、
+    // sourceDirectoryは/path/to/project/item-pathになる
+    const sourceDirectory = resolve(context.projectDirectory, project.sourcePath);
+
+    //コピー先は .working/OPS ディレクトリ
+    const destination = resolve(context.workingDirectory, OPS_DIRECTORY_NAME);
 
     if (project.pageType === PageType.DOCUMENT) {
       const items = await this.loadAsDocumentMode(sourceDirectory, project);
 
       // 非同期処理が入るので安易にmapとかforEachできない
+      const newItems: ManifestItem[] = [];
       for (const itm of items) {
-        const newItem = await this.doCopy(sourceDirectory, itm, destination, project.parseMarkdown);
-        newItems.push(newItem);
+        await this.resourceWriteService.createDestinationDirectory(join(destination, itm.href));
+
+        if (project.parseMarkdown && itm.mediaType === "text/markdown") {
+          newItems.push(await this.convertMarkdown(itm, sourceDirectory, destination, project.cssPath));
+        } else if (itm.mediaType === "text/html") {
+          // TODO ここにHTML→XHTML変換処理を追加する
+          newItems.push(itm);
+        } else {
+          await this.copyOne(itm, sourceDirectory, destination);
+          newItems.push(itm);
+        }
       }
+      return newItems;
     }
 
-    return newItems;
+    return [];
   }
 
   /**
@@ -73,32 +87,64 @@ export class FileCopyService {
       fileTypes = [...fileTypes, "text/markdown"];
     }
 
+    /*
+    TODO DocumentItemLoaderが読み込んだものがManifestItemとして記録され、コピー済みのファイルもManifestItemとして記録されるのが
+    混乱ポイントになっている気がする。
+    */
     const loader = await DocumentItemLoader.start(sourceDirectory, fileTypes, [], []);
     return loader.items;
   }
 
-  protected async doCopy(
-    rootDirectory: string,
-    item: ManifestItem,
-    destinationRootDirectory: string,
-    parseMarkdown: boolean,
-  ) {
-    const dest = resolve(destinationRootDirectory, item.href);
-    // TODO Tryすること
-    await this.resourceWriteService.createDestinationDirectory(dest);
-    if (parseMarkdown && item.mediaType === "text/markdown") {
-      const text = await this.markdownParseService.parseFile(resolve(rootDirectory, item.href));
-      const newFileName = this.changeExtension(item.href, "xhtml");
-      await writeFile(resolve(destinationRootDirectory, newFileName), text);
-
-      return {
-        href: newFileName,
-        id: item.id,
-        mediaType: mime.lookup(newFileName) as string,
-      };
+  /**
+   * 1アイテムに対し、単純なファイルのコピーを行います
+   * @param item アイテム
+   * @param fromDirectory コピー元
+   * @param toDirectory コピー先
+   * @returns 非同期
+   */
+  protected async copyOne(item: ManifestItem, fromDirectory: string, toDirectory: string) {
+    try {
+      await copyFile(resolve(fromDirectory, item.href), resolve(toDirectory, item.href));
+    } catch (error) {
+      console.error(error);
+      console.trace();
+      throw error;
     }
-    await copyFile(resolve(rootDirectory, item.href), resolve(destinationRootDirectory, item.href));
-    return item;
+  }
+
+  /**
+   * Markdownとして読み込んだアイテムをXHTMLに変換して保存します。
+   *
+   * @param markdownItem Markdownとして読み込んだアイテム
+   * @param fromDirectory 読み込み元
+   * @param toDirectory 保存先
+   * @param cssPath CSSの相対パス
+   * @returns 変換後のアイテム
+   */
+  protected async convertMarkdown(
+    markdownItem: ManifestItem,
+    fromDirectory: string,
+    toDirectory: string,
+    cssPath?: string,
+  ) {
+    const fromFullPath = resolve(fromDirectory, markdownItem.href);
+    const dom = await this.xhtmlService.parseMarkdown(fromFullPath);
+    if (cssPath != null) {
+      this.xhtmlService.addCssLink(dom, this.resolveCssPath(markdownItem, cssPath));
+    }
+    const convertedFilePath = this.changeExtension(markdownItem.href, "xhtml");
+    await writeFile(resolve(toDirectory, convertedFilePath), this.xhtmlService.toXhtmlString(dom));
+
+    return {
+      href: convertedFilePath,
+      id: markdownItem.id,
+      mediaType: mime.lookup(convertedFilePath) as string,
+    };
+  }
+
+  protected resolveCssPath(markdownItem: ManifestItem, cssPath: string) {
+    const markdownDir = join(markdownItem.href, "../");
+    return relative(markdownDir, cssPath);
   }
 
   protected changeExtension(fullPath: string, toExtension: string) {

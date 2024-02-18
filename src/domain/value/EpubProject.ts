@@ -18,6 +18,8 @@ export type EpubProject = Readonly<{
   autoExclusion: boolean;
   itemSortType: Case<typeof ItemSortType>;
   tocFilePath?: string;
+  coverImagePath?: string;
+  cssPath?: string;
 }>;
 
 export type AdditionalMetadata<V = unknown> = Readonly<{
@@ -60,5 +62,7 @@ export function createFromParsedYaml(data: Record<string, unknown>): EpubProject
     autoExclusion: (data["auto-exclusion"] as boolean) ?? true,
     itemSortType: (pageItemObject["sort-type"] as Case<typeof ItemSortType>) ?? ItemSortType.STRING,
     tocFilePath: pageItemObject.toc as string,
+    coverImagePath: pageItemObject["cover-image"] as string,
+    cssPath: pageItemObject.css as string,
   };
 }
