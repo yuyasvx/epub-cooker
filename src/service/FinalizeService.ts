@@ -1,14 +1,21 @@
+import { resolve } from "path";
+import { rename, rm } from "fs/promises";
 import { singleton } from "tsyringe";
-import { CookService } from "./CookService";
+import { WORKING_DIERCTORY_NAME } from "./CookService";
 
 @singleton()
 export class FinalizeService {
-  constructor(private cookService: CookService) {}
   /**
    * 後処理の実施。製本に失敗しても動く
    * @param workingDirectoryPath
    */
-  public finalize(workingDirectoryPath: string) {
-    this.cookService.removeWorkingDirectory(workingDirectoryPath);
+  public async finalize(directory: string, debug = false, noPack = false) {
+    if (noPack) {
+      await rename(resolve(directory, WORKING_DIERCTORY_NAME), resolve(directory, "_contents"));
+      return;
+    }
+    if (!debug) {
+      await rm(resolve(directory, WORKING_DIERCTORY_NAME), { recursive: true });
+    }
   }
 }

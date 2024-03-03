@@ -1,4 +1,4 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { readFile, rm, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { singleton } from "tsyringe";
 import { v4 } from "uuid";
@@ -13,7 +13,8 @@ import { ResourceWriteService } from "./ResourceWriteService";
 import { SpineService } from "./SpineService";
 import { TocService } from "./TocService";
 
-const WORKING_DIERCTORY_NAME = ".working";
+//TODO 別の処理でも使われてるが
+export const WORKING_DIERCTORY_NAME = ".working";
 
 @singleton()
 export class CookService {
@@ -26,18 +27,39 @@ export class CookService {
     private artworkService: ArtworkService,
   ) {}
 
+  /**
+   * ブックデータの読み込みを行います。
+   *
+   * 作業ディレクトリへのファイルのコピーまで行います。作業ディレクトリを丸ごとZIP化すればEPUBになりますが、
+   * これは別の処理が担います。
+   *
+   * @param directory プロジェクトディレクトリ
+   * @param project 読み込んだプロジェクト定義
+   * @param noPack 圧縮処理をスキップするか
+   * @returns
+   */
   public async cook(directory: string, project: EpubProject) {
     const context = await this.createContext(directory, project);
+    context.loadedItems = await this.fileCopyService.execute(context, project);
+    // TODO ItemSortTypeをベタ指定
+    context.spineItems = this.spineService.sortItems(context.loadedItems, ItemSortType.STRING);
     await this.tocService.validate(context, project);
     await this.artworkService.validate(context, project);
     await this.resourceWriteService.saveResources(context, project);
-    return this.archiveService.makeEpubArchive(
-      context.workingDirectory,
-      context.projectDirectory,
-      project.bookMetadata.title,
-    );
+    return context;
   }
 
+  /**
+   * コンテキストを作成します。
+   *
+   * EPUB作成のために読み込んだデータや必要な情報は、一旦コンテキストというミュータブルな
+   * 入れ物の中に保存します。各処理は、このコンテキストを受け取ったり、コンテキストにデータを書き込んだりして
+   * 処理を進めていきます。
+   *
+   * @param directory プロジェクトディレクトリ
+   * @param project 読み込んだプロジェクト定義
+   * @returns コンテキスト
+   */
   protected async createContext(directory: string, project: EpubProject) {
     const ctx: EpubContext = {
       projectDirectory: directory,
@@ -45,10 +67,8 @@ export class CookService {
       identifier: await this.identify(directory, project),
       loadedItems: [],
       spineItems: [],
+      bookFileName: project.bookMetadata.title,
     };
-    ctx.loadedItems = await this.fileCopyService.execute(ctx, project); // await this.fileCopyService.loadAndCopy(ctx.projectDirectory, ctx.workingDirectory, project);
-    // TODO ItemSortTypeをベタ指定
-    ctx.spineItems = this.spineService.sortItems(ctx.loadedItems, ItemSortType.STRING);
 
     return ctx;
   }
@@ -81,9 +101,5 @@ export class CookService {
     const uuid = `urn:uuid:${v4()}`;
     await writeFile(resolve(directory, "identifier"), uuid);
     return uuid;
-  }
-
-  public async removeWorkingDirectory(directory: string) {
-    // rm(resolve(directory, WORKING_DIERCTORY_NAME), { recursive: true });
   }
 }
