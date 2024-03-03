@@ -1,5 +1,6 @@
 import { singleton } from "tsyringe";
 import { AppCommand } from "../domain/prototype/Command";
+import { ArchiveService } from "../service/ArchiveService";
 import { CookService } from "../service/CookService";
 import { FinalizeService } from "../service/FinalizeService";
 import { ProjectLoadService } from "../service/ProjectLoadService";
@@ -14,6 +15,7 @@ export class CookCommand implements AppCommand {
     private cookService: CookService,
     private finalizeService: FinalizeService,
     private commandOption: CommandOption,
+    private archiveService: ArchiveService,
   ) {}
 
   /**
@@ -24,21 +26,28 @@ export class CookCommand implements AppCommand {
    */
   public async run() {
     const projectDirectory = this.commandOption.getDir() || process.cwd();
-    let projectLoaded = false;
+    const proj = await this.projectLoadService.loadFromDirectory(projectDirectory);
+
+    console.log(`${proj.bookMetadata.title} の製本を開始します。`);
 
     try {
-      const proj = await this.projectLoadService.loadFromDirectory(projectDirectory);
-      projectLoaded = true;
-      console.log(`${proj.bookMetadata.title} の製本を開始します。`);
-      await this.cookService.cook(projectDirectory, proj);
-    } catch (error) {
-      console.log("プロジェクトの読み込みに失敗しました");
-      console.error(error);
-      // TODO プロジェクトの読み込みに成功しても、後続処理が失敗したら多分ここに飛ぶ
-    } finally {
-      if (projectLoaded) {
-        this.finalizeService.finalize(projectDirectory);
+      const context = await this.cookService.cook(projectDirectory, proj);
+
+      if (this.commandOption.isNoPack()) {
+        console.log("データの読み込みとファイルのコピーが終了しました。");
+        return;
       }
+      await this.archiveService.makeEpubArchive(
+        context.workingDirectory,
+        context.projectDirectory,
+        context.bookFileName,
+      );
+    } finally {
+      this.finalizeService.finalize(
+        projectDirectory,
+        this.commandOption.isDebugEnabled(),
+        this.commandOption.isNoPack(),
+      );
     }
   }
 }

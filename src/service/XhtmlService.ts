@@ -3,7 +3,7 @@ import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
 import markdownit from "markdown-it";
 import obsidianImages from "markdown-it-obsidian-images";
 import { singleton } from "tsyringe";
-const md = markdownit({ html: true }).use(obsidianImages({ htmlAttributes: { class: "inserted-image" } }));
+const md = markdownit({ html: true }).use(obsidianImages());
 const domParser_ = new DOMParser();
 const xmlSerializer_ = new XMLSerializer();
 

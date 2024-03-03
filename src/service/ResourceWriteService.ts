@@ -44,7 +44,7 @@ export class ResourceWriteService {
    */
   protected async save(directory: string, resource: XmlResource, skipCheck = false) {
     const destination = resolvePath(directory, resource.path);
-    this.saveTextFile(resource.toXml(), destination, skipCheck);
+    await this.saveTextFile(resource.toXml(), destination, skipCheck);
   }
 
   /**

@@ -10,8 +10,8 @@ export class ArchiveService {
     await this.until(() => this.findEssentialItems(sourceDirectory));
 
     console.log("EPUBファイルの作成を行っています ...");
-    const fileName = this.sanitizeFileName(title);
-    const output = createWriteStream(resolvePath(destinationDirectory, `${fileName}.epub`));
+    const sanitizedFileName = this.sanitizeFileName(title);
+    const output = createWriteStream(resolvePath(destinationDirectory, `${sanitizedFileName}.epub`));
     const archive = archiver("zip");
 
     output.on("close", () => {
@@ -25,14 +25,17 @@ export class ArchiveService {
       store: true,
       name: "mimetype",
     });
-    archive.glob("OPS/*", { cwd: resolvePath(sourceDirectory) });
-    archive.glob("OPS/**/*", { cwd: resolvePath(sourceDirectory) });
-    archive.glob("META-INF/*", { cwd: resolvePath(sourceDirectory) });
-    archive.glob("META-INF/**/*", { cwd: resolvePath(sourceDirectory) });
+    archive.glob("*", { cwd: resolvePath(sourceDirectory) });
+    archive.glob("**/*", { cwd: resolvePath(sourceDirectory) });
     archive.pipe(output);
     return archive.finalize();
   }
 
+  /**
+   * WindowsやMacのファイルシステムで使っていけない記号を全て`_`に変換します
+   * @param fileName ファイル名
+   * @returns 変換済みのファイル名文字列
+   */
   protected sanitizeFileName(fileName: string) {
     return fileName.replace(/[\:\\\/\*\?\"\<\>\|]\./, "_");
   }

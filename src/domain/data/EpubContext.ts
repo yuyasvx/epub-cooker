@@ -7,4 +7,5 @@ export type EpubContext = {
   identifier: string;
   loadedItems: ManifestItem[];
   spineItems: SpineItems[];
+  bookFileName: string;
 };

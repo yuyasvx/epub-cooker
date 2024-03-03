@@ -1,5 +1,4 @@
 import { Dirent } from "fs";
-import crypto from "node:crypto";
 import { join, resolve } from "path";
 import { readdir } from "fs/promises";
 import mime from "mime-types";
@@ -50,7 +49,7 @@ export class DocumentItemLoader {
       this._items.push({
         href: join(directory, dirent.name),
         // id: crypto.createHash("sha1").update(join(directory, dirent.name)).digest("hex"),
-        id: Buffer.from(join(directory, dirent.name)).toString("base64"),
+        id: Buffer.from(join(directory, dirent.name)).toString("base64").replaceAll("=", "_"),
         mediaType: mime.lookup(dirent.name) as string,
       });
     }
