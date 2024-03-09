@@ -8,4 +8,4 @@ jobs:
   Test:
     uses: ./.github/workflows/run-jest.yml
     with:
-      collect_coverage: true
+      collect-coverage: true
