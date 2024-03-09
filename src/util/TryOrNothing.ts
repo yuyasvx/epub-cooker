@@ -1,15 +1,20 @@
-export function tryOrNothing<T>(tryFn: () => T): T | undefined {
+export function tryOrNothing<T, E = unknown>(tryFn: () => T, onFail?: (error: E) => void): T | undefined {
   try {
     return tryFn();
-  } catch (_) {
+  } catch (error) {
+    onFail?.(error as E);
     return undefined;
   }
 }
 
-export async function asyncTryOrNothing<T>(tryFn: () => Promise<T>): Promise<T | undefined> {
+export async function asyncTryOrNothing<T, E = unknown>(
+  tryFn: () => Promise<T>,
+  onFail?: (error: E) => void,
+): Promise<T | undefined> {
   try {
     return await tryFn();
-  } catch (_) {
+  } catch (error) {
+    onFail?.(error as E);
     return undefined;
   }
 }

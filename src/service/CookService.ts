@@ -6,7 +6,6 @@ import { EpubContext } from "../domain/data/EpubContext";
 import { ItemSortType } from "../domain/enums/ItemSortType";
 import { EpubProject } from "../domain/value/EpubProject";
 import { asyncTryOrNothing } from "../util/TryOrNothing";
-import { ArchiveService } from "./ArchiveService";
 import { ArtworkService } from "./ArtworkService";
 import { FileCopyService } from "./FileCopyService";
 import { ResourceWriteService } from "./ResourceWriteService";
@@ -22,7 +21,6 @@ export class CookService {
     private resourceWriteService: ResourceWriteService,
     private fileCopyService: FileCopyService,
     private spineService: SpineService,
-    private archiveService: ArchiveService,
     private tocService: TocService,
     private artworkService: ArtworkService,
   ) {}
@@ -41,9 +39,9 @@ export class CookService {
   public async cook(directory: string, project: EpubProject) {
     const context = await this.createContext(directory, project);
     context.loadedItems = await this.fileCopyService.execute(context, project);
-    // TODO ItemSortTypeをベタ指定
-    context.spineItems = this.spineService.sortItems(context.loadedItems, ItemSortType.STRING);
     await this.tocService.validate(context, project);
+    // TODO ItemSortTypeをベタ指定
+    context.spineItems = this.spineService.sortItems(context.loadedItems, ItemSortType.STRING, project.visibleTocFile);
     await this.artworkService.validate(context, project);
     await this.resourceWriteService.saveResources(context, project);
     return context;

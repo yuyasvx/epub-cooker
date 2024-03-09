@@ -6,10 +6,15 @@ import { SpineItems } from "../domain/value/SpineItem";
 
 @singleton()
 export class SpineService {
-  public sortItems(items: ManifestItem[], type: Case<typeof ItemSortType>): SpineItems[] {
+  public sortItems(items: ManifestItem[], type: Case<typeof ItemSortType>, visibleTocFile = true): SpineItems[] {
     const sortedItems = [...items.filter((itm) => itm.mediaType === "application/xhtml+xml")];
     // sortedItems.sort()
 
-    return sortedItems.map((itm): SpineItems => ({ id: itm.id, linear: true }));
+    return sortedItems.map((itm): SpineItems => {
+      if (itm.properties === "nav") {
+        return { id: itm.id, linear: visibleTocFile };
+      }
+      return { id: itm.id, linear: true };
+    });
   }
 }
