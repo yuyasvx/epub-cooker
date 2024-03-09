@@ -15,14 +15,14 @@ type TocOption =
     };
 
 /**
- * オブジェクトをプロジェクト定義として読み込みます。
+ * パースしたYAMLデータをプロジェクト定義に変換します。
  *
  * 各設定値のデータ型が想定通りかは確認しません。
  *
  * @param data オブジェクト(YAMLからパースした直後のデータ)
  * @returns プロジェクト定義（設定値未確認）
  */
-export function loadProjectFromRawObject(data: Record<string, unknown>): UnknownValue<EpubProject> {
+export function toEpubProject(data: Record<string, unknown>): UnknownValue<EpubProject> {
   return {
     version: data.version as number,
     bookMetadata: getBookMetadata(data),

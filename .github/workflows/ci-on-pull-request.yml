@@ -1,0 +1,12 @@
+name: Run CI On Pull Request
+
+on:
+  push:
+    paths:
+      - "src/**"
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+jobs:
+  Test:
+    uses: ./.github/workflows/run-jest.yml
