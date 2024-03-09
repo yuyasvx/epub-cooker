@@ -1,4 +1,4 @@
-export const PageType = {
+export const BookType = {
   DOCUMENT: "document",
   JPEG: "jpeg",
   png: "png",

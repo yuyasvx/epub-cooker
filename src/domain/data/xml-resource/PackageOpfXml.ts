@@ -1,4 +1,4 @@
-import { getFormattedDateTime } from "../../../util/FormattedDateTime";
+import { getFormattedDate, getFormattedDateTime } from "../../../util/FormattedDateTime";
 import { Case } from "../../enums/Case";
 import { PageProgression } from "../../enums/PageProgression";
 import { AdditionalMetadata, EpubProject } from "../../value/EpubProject";
@@ -52,6 +52,7 @@ export class PackageOpfXml extends XmlResource {
             "dc:title": [{ _: "$title", $: { id: "title" } }],
             "dc:creator": [{ _: undefined as string | undefined, $: { id: "creator" } }],
             "dc:publisher": [undefined as string | undefined],
+            "dc:date": ["" as string | undefined],
             "dc:language": [{ _: undefined as string | undefined, $: { id: "language" } }],
             meta: [] as MetadataEntry[],
             "dc:identifier": [{ _: undefined as string | undefined, $: { id: "book-id" } }],
@@ -81,13 +82,17 @@ export class PackageOpfXml extends XmlResource {
     const title = project.bookMetadata.title;
     const creator = project.bookMetadata.creator;
     const publisher = project.bookMetadata.publisher;
+    const publishedDate = project.bookMetadata.publishedDate;
 
     const xml = new PackageOpfXml();
     xml.setLanguage(lang);
+    // TODO 各プロパティがundefinedだった場合、この書き方だとバグるので、undefinedならプロパティごと消し去るような挙動が良さそう
     xml.resource.content.package.metadata[0]["dc:title"][0]._ = title;
     xml.resource.content.package.metadata[0]["dc:creator"][0]._ = creator;
     xml.resource.content.package.metadata[0]["dc:publisher"][0] = publisher;
     xml.resource.content.package.metadata[0]["dc:identifier"][0]._ = identifier;
+    xml.resource.content.package.metadata[0]["dc:date"][0] =
+      publishedDate != null ? getFormattedDate(publishedDate) : "";
     xml.setSpecifiedFonts(project.useSpecifiedFonts);
     xml.setPageProgression(project.pageProgression);
 

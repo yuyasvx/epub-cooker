@@ -4,7 +4,7 @@ import mime from "mime-types";
 import { singleton } from "tsyringe";
 import { EpubContext } from "../domain/data/EpubContext";
 import { DocumentItemLoader } from "../domain/data/ManifestItemLoader";
-import { PageType } from "../domain/enums/PageType";
+import { BookType } from "../domain/enums/BookType";
 import { EpubProject } from "../domain/value/EpubProject";
 import { ManifestItem } from "../domain/value/ManifestItem";
 import { ResourceWriteService } from "./ResourceWriteService";
@@ -54,7 +54,7 @@ export class FileCopyService {
     //コピー先は .working/OPS ディレクトリ
     const destination = resolve(context.workingDirectory, OPS_DIRECTORY_NAME);
 
-    if (project.pageType === PageType.DOCUMENT) {
+    if (project.bookType === BookType.DOCUMENT) {
       const items = await this.loadAsDocumentMode(sourceDirectory, project);
 
       // 非同期処理が入るので安易にmapとかforEachできない
@@ -82,7 +82,8 @@ export class FileCopyService {
    * documentモードとしてコピー対象のアイテムを収集します
    */
   protected async loadAsDocumentMode(sourceDirectory: string, project: EpubProject) {
-    let fileTypes = project.autoExclusion ? SUPPORTED_DOCUMENTS : undefined;
+    // FIXME 面倒なので一旦除外条件が自動の場合だけ、読み込むファイル形式を限定させ、マニュアル指定が入っている場合は何も限定させないことにしている
+    let fileTypes = project.exclude === "auto" ? SUPPORTED_DOCUMENTS : undefined;
     if (fileTypes != null && project.parseMarkdown) {
       fileTypes = [...fileTypes, "text/markdown"];
     }
@@ -91,7 +92,12 @@ export class FileCopyService {
     TODO DocumentItemLoaderが読み込んだものがManifestItemとして記録され、コピー済みのファイルもManifestItemとして記録されるのが
     混乱ポイントになっている気がする。
     */
-    const loader = await DocumentItemLoader.start(sourceDirectory, fileTypes, [], []);
+    const loader = await DocumentItemLoader.start(
+      sourceDirectory,
+      fileTypes,
+      project.include,
+      project.exclude === "auto" ? [] : project.exclude,
+    );
     return loader.items;
   }
 

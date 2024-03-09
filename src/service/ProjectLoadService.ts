@@ -2,7 +2,9 @@ import { readFile, readdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import { singleton } from "tsyringe";
 import YAML from "yaml";
-import { EpubProject, createFromParsedYaml } from "../domain/value/EpubProject";
+import { EpubProject } from "../domain/value/EpubProject";
+import { loadProjectFromRawObject } from "../logic/LoadProjectFromRawObject";
+import { validateProject } from "../logic/ValidateProject";
 
 @singleton()
 export class ProjectLoadService {
@@ -20,7 +22,12 @@ export class ProjectLoadService {
     }
     const rawText = (await readFile(resolve(resolvedPath, projectFileName))).toString();
     const yml = YAML.parse(rawText);
-    return createFromParsedYaml(yml);
+    const project = loadProjectFromRawObject(yml);
+    if (validateProject(project)) {
+      return project;
+    }
+    // ここには辿り着かない想定
+    throw new Error("UNEXPECTED ERROR");
   }
 
   protected async decideFileName(resolvedPath: string) {

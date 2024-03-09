@@ -23,7 +23,8 @@ export class TocService {
    * @param project プロジェクト定義
    */
   public async validate(context: EpubContext, project: EpubProject) {
-    const filePath = project.tocFilePath;
+    // TODO やっていることが実はvaliadteじゃなかったりするので、メソッド名変える
+    const filePath = project.tocPath;
 
     if (filePath == null) {
       const tocItem = await this.handleNoTocDefinitionError(context.workingDirectory, undefined);
