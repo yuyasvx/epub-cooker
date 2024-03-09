@@ -65,8 +65,7 @@ export class FileCopyService {
         if (project.parseMarkdown && itm.mediaType === "text/markdown") {
           newItems.push(await this.convertMarkdown(itm, sourceDirectory, destination, project.cssPath));
         } else if (itm.mediaType === "text/html") {
-          // TODO ここにHTML→XHTML変換処理を追加する
-          newItems.push(itm);
+          newItems.push(await this.convertHtml(itm, sourceDirectory, destination, project.cssPath));
         } else {
           await this.copyOne(itm, sourceDirectory, destination);
           newItems.push(itm);
@@ -144,6 +143,23 @@ export class FileCopyService {
     return {
       href: convertedFilePath,
       id: markdownItem.id,
+      mediaType: mime.lookup(convertedFilePath) as string,
+    };
+  }
+
+  protected async convertHtml(htmlItem: ManifestItem, fromDirectory: string, toDirectory: string, cssPath?: string) {
+    const fromFullPath = resolve(fromDirectory, htmlItem.href);
+    const dom = await this.xhtmlService.parseHtml(fromFullPath);
+    if (cssPath != null) {
+      this.xhtmlService.addCssLink(dom, this.resolveCssPath(htmlItem, cssPath));
+    }
+
+    const convertedFilePath = this.changeExtension(htmlItem.href, "xhtml");
+    await writeFile(resolve(toDirectory, convertedFilePath), this.xhtmlService.toXhtmlString(dom));
+
+    return {
+      href: convertedFilePath,
+      id: htmlItem.id,
       mediaType: mime.lookup(convertedFilePath) as string,
     };
   }

@@ -18,6 +18,13 @@ export class XhtmlService {
     return this.getDom(htmlText);
   }
 
+  public async parseHtml(filePath: string) {
+    const rawText = (await readFile(filePath)).toString();
+    const dom = this.getDom(rawText);
+    dom.getElementsByTagName("html")[0].setAttribute("xmlns:epub", "http://www.idpf.org/2007/ops");
+    return dom;
+  }
+
   public markdownToHtml(markdownText: string, title = "") {
     return `<html xmlns:epub="http://www.idpf.org/2007/ops">
 <head><title>${title}</title><meta charset="UTF-8"></head>
