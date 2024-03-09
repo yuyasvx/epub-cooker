@@ -6,4 +6,4 @@ on:
 
 jobs:
   Test:
-    uses: ./run-jest.yml
+    uses: ./.github/workflows/run-jest.yml
