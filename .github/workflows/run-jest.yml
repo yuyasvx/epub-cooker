@@ -40,5 +40,6 @@ jobs:
         if: inputs.collect-coverage == true
         uses: codecov/codecov-action@v4.0.1
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+          # token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage/cobertura-coverage.xml
           slug: yuyasvx/epub-cooker
