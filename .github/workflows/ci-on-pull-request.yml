@@ -1,0 +1,9 @@
+name: Run CI On Pull Request
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+jobs:
+  Test:
+    uses: ./.github/workflows/run-jest.yml

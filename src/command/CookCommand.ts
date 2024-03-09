@@ -1,9 +1,9 @@
 import { singleton } from "tsyringe";
 import { AppCommand } from "../domain/prototype/Command";
+import { loadFromDirectory } from "../logic/ProjectLoader";
 import { ArchiveService } from "../service/ArchiveService";
 import { CookService } from "../service/CookService";
 import { FinalizeService } from "../service/FinalizeService";
-import { ProjectLoadService } from "../service/ProjectLoadService";
 import { CommandOption } from "./CommandOptions";
 
 @singleton()
@@ -11,7 +11,6 @@ export class CookCommand implements AppCommand {
   readonly name = "cook";
 
   constructor(
-    private projectLoadService: ProjectLoadService,
     private cookService: CookService,
     private finalizeService: FinalizeService,
     private commandOption: CommandOption,
@@ -26,7 +25,7 @@ export class CookCommand implements AppCommand {
    */
   public async run() {
     const projectDirectory = this.commandOption.getDir() || process.cwd();
-    const proj = await this.projectLoadService.loadFromDirectory(projectDirectory);
+    const proj = await loadFromDirectory(projectDirectory);
 
     console.log(`${proj.bookMetadata.title} の製本を開始します。`);
 
