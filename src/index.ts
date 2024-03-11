@@ -1,4 +1,4 @@
 import "reflect-metadata";
-import { loadCommands } from "./loader/CommandLoader";
+import { initialize } from "./app/Initializer";
 
-loadCommands();
+initialize();

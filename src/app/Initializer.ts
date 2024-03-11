@@ -13,7 +13,7 @@ const commands = [
   container.resolve(PackCommand),
 ] as AppCommand[];
 
-export function loadCommands() {
+export function initialize() {
   for (const c of commands) {
     const cmd = program.command(c.name);
     cmd.action(async () => {

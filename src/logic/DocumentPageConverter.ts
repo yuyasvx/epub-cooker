@@ -3,9 +3,10 @@ import { readFile, writeFile } from "fs/promises";
 import MarkdownIt from "markdown-it";
 import obsidianImages from "markdown-it-obsidian-images";
 import mime from "mime-types";
-import { ManifestItem } from "../domain/value/ManifestItem";
+import { CollectedItem } from "../domain/value/CollectedItem";
 import { addCssLink, getDom, toXhtmlString } from "../util/DomUtil";
 import { changeExtension } from "../util/FileExtensionUtil";
+import { generateId } from "../util/ManifestIdGenerator";
 
 const md = MarkdownIt({ html: true }).use(obsidianImages());
 
@@ -19,7 +20,7 @@ const md = MarkdownIt({ html: true }).use(obsidianImages());
  * @returns 変換後のアイテム
  */
 export async function convertMarkdown(
-  markdownItem: ManifestItem,
+  markdownItem: CollectedItem,
   fromDirectory: string,
   toDirectory: string,
   cssPath?: string,
@@ -34,13 +35,13 @@ export async function convertMarkdown(
 
   return {
     href: convertedFilePath,
-    id: markdownItem.id,
+    id: generateId(markdownItem),
     mediaType: mime.lookup(convertedFilePath) as string,
   };
 }
 
 export async function convertHtml(
-  htmlItem: ManifestItem,
+  htmlItem: CollectedItem,
   fromDirectory: string,
   toDirectory: string,
   cssPath?: string,
@@ -56,12 +57,12 @@ export async function convertHtml(
 
   return {
     href: convertedFilePath,
-    id: htmlItem.id,
+    id: generateId(htmlItem),
     mediaType: mime.lookup(convertedFilePath) as string,
   };
 }
 
-export function resolveCssPath(markdownItem: ManifestItem, cssPath: string) {
+export function resolveCssPath(markdownItem: CollectedItem, cssPath: string) {
   const markdownDir = join(markdownItem.href, "../");
   return relative(markdownDir, cssPath);
 }

@@ -12,7 +12,7 @@ export function epubProject(id?: string): EpubProject {
     include: [],
     pageProgression: PageProgression.RTL,
     parseMarkdown: true,
-    sourcePath: "/path/to/project/data",
+    sourcePath: "data-directory",
     useSpecifiedFonts: false,
     version: 1,
     visibleTocFile: true,

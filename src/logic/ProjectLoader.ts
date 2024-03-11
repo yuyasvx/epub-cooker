@@ -8,19 +8,29 @@ import { validateProject } from "./ValidateProject";
 const FILE_NAME = "project" as const;
 const EXTENSIONS = ["yml", "yaml"] as const;
 
+/**
+ * 与えられたディレクトリからプロジェクト定義を読み込みます。
+ *
+ * @param resolvedPath project.ymlが存在するディレクトリの完全なパス
+ * @returns プロジェクト定義
+ */
 export async function loadFromDirectory(resolvedPath: string): Promise<EpubProject> {
   const projectFileName = await decideFileName(resolvedPath);
   if (projectFileName == null) {
     throw new Error("PROJECT_NOT_FOUND");
   }
-  const rawText = (await readFile(resolve(resolvedPath, projectFileName))).toString();
-  const yml = YAML.parse(rawText);
-  const project = toEpubProject(yml);
-  if (validateProject(project)) {
-    return project;
+  try {
+    const rawText = (await readFile(resolve(resolvedPath, projectFileName))).toString();
+    const yml = YAML.parse(rawText);
+    const project = toEpubProject(yml);
+    if (validateProject(project)) {
+      return project;
+    }
+    // ここには辿り着かない想定
+    throw new Error("UNEXPECTED ERROR");
+  } catch (error) {
+    throw new Error("FAILED_TO_LOAD_PROJECT");
   }
-  // ここには辿り着かない想定
-  throw new Error("UNEXPECTED ERROR");
 }
 
 export async function decideFileName(resolvedPath: string) {
