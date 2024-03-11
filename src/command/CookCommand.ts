@@ -1,21 +1,13 @@
 import { singleton } from "tsyringe";
 import { AppCommand } from "../domain/prototype/Command";
-import { loadFromDirectory } from "../logic/ProjectLoader";
-import { ArchiveService } from "../service/ArchiveService";
-import { CookService } from "../service/CookService";
-import { FinalizeService } from "../service/FinalizeService";
+import { cook } from "../module/CookModule";
 import { CommandOption } from "./CommandOptions";
 
 @singleton()
 export class CookCommand implements AppCommand {
   readonly name = "cook";
 
-  constructor(
-    private cookService: CookService,
-    private finalizeService: FinalizeService,
-    private commandOption: CommandOption,
-    private archiveService: ArchiveService,
-  ) {}
+  constructor(private commandOption: CommandOption) {}
 
   /**
    * プロジェクト定義を読み込んで、Epubの製本を実行します。
@@ -25,28 +17,6 @@ export class CookCommand implements AppCommand {
    */
   public async run() {
     const projectDirectory = this.commandOption.getDir() || process.cwd();
-    const proj = await loadFromDirectory(projectDirectory);
-
-    console.log(`${proj.bookMetadata.title} の製本を開始します。`);
-
-    try {
-      const context = await this.cookService.cook(projectDirectory, proj);
-
-      if (this.commandOption.isNoPack()) {
-        console.log("データの読み込みとファイルのコピーが終了しました。");
-        return;
-      }
-      await this.archiveService.makeEpubArchive(
-        context.workingDirectory,
-        context.projectDirectory,
-        context.bookFileName,
-      );
-    } finally {
-      this.finalizeService.finalize(
-        projectDirectory,
-        this.commandOption.isDebugEnabled(),
-        this.commandOption.isNoPack(),
-      );
-    }
+    await cook(projectDirectory, this.commandOption.isNoPack(), this.commandOption.isDebugEnabled());
   }
 }

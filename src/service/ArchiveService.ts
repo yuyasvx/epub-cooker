@@ -25,7 +25,7 @@ export class ArchiveService {
       store: true,
       name: "mimetype",
     });
-    archive.glob("*", { cwd: resolvePath(sourceDirectory) });
+    archive.glob("*", { cwd: resolvePath(sourceDirectory), ignore: "mimetype" });
     archive.glob("**/*", { cwd: resolvePath(sourceDirectory) });
     archive.pipe(output);
     return archive.finalize();

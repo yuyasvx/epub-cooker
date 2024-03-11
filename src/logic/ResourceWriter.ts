@@ -1,11 +1,10 @@
 import { resolve as resolvePath } from "path";
 import { mkdir, readdir, writeFile } from "fs/promises";
-import { EpubContext } from "../domain/data/EpubContext";
+import { BookContext } from "../domain/data/EpubContext";
 import { ContainerXml } from "../domain/data/xml-resource/ContainerXml";
 import { IBooksDisplayOptionsXml } from "../domain/data/xml-resource/IBooksDisplayOptionsXml";
 import { PackageOpfXml } from "../domain/data/xml-resource/PackageOpfXml";
 import { XmlResource } from "../domain/data/xml-resource/XmlResource";
-import { EpubProject } from "../domain/value/EpubProject";
 
 // TODO リソースオブジェクトorプロジェクト定義 → 保存先のチェック処理 → ファイルの書き込み が渾然一体
 
@@ -15,7 +14,8 @@ import { EpubProject } from "../domain/value/EpubProject";
  * @param context コンテキスト
  * @param project プロジェクト定義
  */
-export async function saveResources(context: EpubContext, project: EpubProject) {
+export async function saveResources(context: BookContext) {
+  const { project } = context;
   const containerXml = new ContainerXml();
   const displayOptionsXml = new IBooksDisplayOptionsXml();
   displayOptionsXml.setSpecifiedFonts(project.useSpecifiedFonts);
