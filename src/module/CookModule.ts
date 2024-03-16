@@ -1,9 +1,10 @@
 import { createContext, start } from "../logic/BookProcessor";
 import { finalize } from "../logic/Finalizer";
-import { loadFromDirectory } from "../logic/ProjectLoader";
+import { loadProjectFile } from "../logic/ProjectLoader";
+import { makeEpubArchive } from "./PackModule";
 
 export async function cook(projectDirectory: string, noPack = false, debug = false) {
-  const proj = await loadFromDirectory(projectDirectory);
+  const proj = await loadProjectFile(projectDirectory);
 
   console.log(`${proj.bookMetadata.title} の製本を開始します。`);
   const context = await createContext(projectDirectory, proj);
@@ -16,7 +17,7 @@ export async function cook(projectDirectory: string, noPack = false, debug = fal
       return;
     }
 
-    // makeEpubArchive
+    makeEpubArchive(context.workingDirectory, context.projectDirectory, context.bookFileName);
   } finally {
     finalize(context, debug, noPack);
   }

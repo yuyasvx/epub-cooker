@@ -1,4 +1,5 @@
 import { parseISO } from "date-fns";
+import YAML from "yaml";
 import { BookType } from "../domain/enums/BookType";
 import { Case } from "../domain/enums/Case";
 import { ItemSortType } from "../domain/enums/ItemSortType";
@@ -6,6 +7,7 @@ import { PageProgression } from "../domain/enums/PageProgression";
 import { BookMetadata } from "../domain/value/BookMetadata";
 import { AdditionalMetadata, EpubDataDetail, EpubProject } from "../domain/value/EpubProject";
 import { UnknownValue } from "../util/UnknownValue";
+import { validateProject } from "./ValidateProject";
 
 type TocOption =
   | string
@@ -15,15 +17,16 @@ type TocOption =
     };
 
 /**
- * パースしたYAMLデータをプロジェクト定義に変換します。
+ * YAMLで書かれたテキストデータを解析してプロジェクト定義として解釈します。
  *
  * 各設定値のデータ型が想定通りかは確認しません。
  *
- * @param data オブジェクト(YAMLからパースした直後のデータ)
- * @returns プロジェクト定義（設定値未確認）
+ * @param rawText テキプロジェクト定義
  */
-export function toEpubProject(data: Record<string, unknown>): UnknownValue<EpubProject> {
-  return {
+export function parse(rawText: string): EpubProject {
+  const data = YAML.parse(rawText);
+
+  const project = {
     version: data.version as number,
     bookMetadata: getBookMetadata(data),
     additionalMetadata: (data["additional-metadata"] as AdditionalMetadata[]) ?? [],
@@ -33,6 +36,12 @@ export function toEpubProject(data: Record<string, unknown>): UnknownValue<EpubP
     parseMarkdown: (data["enable-markdown-parser"] as boolean) ?? true,
     ...getDataObject(data),
   };
+
+  if (validateProject(project)) {
+    return project;
+  }
+  // ここには辿り着かない想定
+  throw new Error("UNEXPECTED ERROR");
 }
 
 function loadIdentifier(data: Record<string, unknown>) {

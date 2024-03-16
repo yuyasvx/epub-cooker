@@ -2,6 +2,15 @@ import { BookMetadata } from "../domain/value/BookMetadata";
 import { EpubProject } from "../domain/value/EpubProject";
 import { UnknownValue } from "../util/UnknownValue";
 
+/**
+ * プロジェクト定義のバリデーションを行います。
+ *
+ * バリデーションが成功した場合はtrueを返します。失敗した場合はその時点でエラーをスローします。
+ * （つまりfalseを返す事はない）
+ *
+ * @param data バリデーション対象のプロジェクト定義
+ * @returns true
+ */
 export function validateProject(data: unknown): data is EpubProject {
   if (typeof data !== "object") {
     return false;

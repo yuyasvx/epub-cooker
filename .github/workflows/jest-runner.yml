@@ -1,4 +1,4 @@
-name: _Run Unit Test
+name: _Unit Test Runner
 
 on:
   workflow_call:
@@ -15,9 +15,6 @@ env:
 jobs:
   Test:
     name: Run test codes
-    if: |
-      github.event.pull_request.draft == false
-      && !startsWith(github.head_ref, 'release')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
