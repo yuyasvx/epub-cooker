@@ -1,9 +1,8 @@
 import { resolve } from "path";
 import { readFile, readdir } from "fs/promises";
-import YAML from "yaml";
 import { EpubProject } from "../domain/value/EpubProject";
-import { toEpubProject } from "./EpubProjectConverter";
-import { validateProject } from "./ValidateProject";
+import { asyncTryOrNothing } from "../util/TryOrNothing";
+import { parse } from "./ProjectParser";
 
 const FILE_NAME = "project" as const;
 const EXTENSIONS = ["yml", "yaml"] as const;
@@ -14,27 +13,21 @@ const EXTENSIONS = ["yml", "yaml"] as const;
  * @param resolvedPath project.ymlが存在するディレクトリの完全なパス
  * @returns プロジェクト定義
  */
-export async function loadFromDirectory(resolvedPath: string): Promise<EpubProject> {
+export async function loadProjectFile(resolvedPath: string): Promise<EpubProject> {
   const projectFileName = await decideFileName(resolvedPath);
   if (projectFileName == null) {
     throw new Error("PROJECT_NOT_FOUND");
   }
   try {
     const rawText = (await readFile(resolve(resolvedPath, projectFileName))).toString();
-    const yml = YAML.parse(rawText);
-    const project = toEpubProject(yml);
-    if (validateProject(project)) {
-      return project;
-    }
-    // ここには辿り着かない想定
-    throw new Error("UNEXPECTED ERROR");
+    return parse(rawText);
   } catch (error) {
     throw new Error("FAILED_TO_LOAD_PROJECT");
   }
 }
 
-export async function decideFileName(resolvedPath: string) {
-  const files = await readdir(resolvedPath);
+async function decideFileName(resolvedPath: string) {
+  const files = (await asyncTryOrNothing(() => readdir(resolvedPath))) || [];
 
   for (const f of files) {
     const fileNameTuple = f.toLowerCase().split(".");

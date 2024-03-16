@@ -7,3 +7,9 @@ export type CollectedItem = Readonly<{
   createdTimestamp?: number;
   lastModifiedTimestamp?: number;
 }>;
+
+export type CollectedPhotoItem = Readonly<{
+  width: number;
+  height: number;
+}> &
+  CollectedItem;
