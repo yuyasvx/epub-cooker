@@ -1,8 +1,12 @@
-name: Trigger CI On Pull Request
+name: Run Unit Test Manually
 
 on:
-  pull_request:
-    types: [opened, reopened, synchronize]
+  workflow_call:
+    inputs:
+      coverage:
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   Test:
@@ -11,5 +15,5 @@ jobs:
       github.event.pull_request.draft == false
       && !startsWith(github.head_ref, 'release')
     with:
-      collect-coverage: true
+      collect-coverage: inputs.coverage
     secrets: inherit
