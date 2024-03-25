@@ -1,6 +1,6 @@
 import { resolve } from "path";
 import { BookContext } from "../domain/data/EpubContext";
-import { move, remove } from "../writer/FileWriter";
+import { move, remove } from "../writer/FileIo";
 
 /**
  * 後処理の実施。製本に失敗しても動く
@@ -12,6 +12,6 @@ export async function finalize(context: BookContext, debug = false, noPack = fal
     return;
   }
   if (!debug) {
-    await remove(context.workingDirectory);
+    (await remove(context.workingDirectory)).unwrap();
   }
 }

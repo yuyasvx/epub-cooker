@@ -1,9 +1,10 @@
 name: Run Unit Test Manually
 
 on:
-  workflow_call:
+  workflow_dispatch:
     inputs:
       coverage:
+        description: "カバレッジ集計を行ってテストするか"
         required: false
         default: false
         type: boolean
@@ -11,9 +12,6 @@ on:
 jobs:
   Test:
     uses: ./.github/workflows/jest-runner.yml
-    if: |
-      github.event.pull_request.draft == false
-      && !startsWith(github.head_ref, 'release')
     with:
       collect-coverage: inputs.coverage
     secrets: inherit

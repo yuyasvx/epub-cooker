@@ -1,8 +1,5 @@
-import { singleton } from "tsyringe";
-import { AppCommand } from "../domain/prototype/Command";
-
-@singleton()
-export class NewCommand implements AppCommand {
+// TODO 未実装
+class NewCommand {
   readonly name = "new";
 
   public async run() {

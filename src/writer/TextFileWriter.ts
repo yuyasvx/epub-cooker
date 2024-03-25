@@ -1,6 +1,6 @@
 import { resolve as resolvePath } from "path";
 import { mkdir, writeFile } from "fs/promises";
-import { checkDirectory } from "./FileWriter";
+import { checkDirectory } from "./FileIo";
 
 export async function saveTextFile(rawText: string, fullPath: string, force = false) {
   if (!force && !(await checkDirectory(fullPath))) {

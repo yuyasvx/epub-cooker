@@ -3,6 +3,6 @@ coverage:
   default:
     informational: true
 comment:
-  layout: "diff, flags"
+  layout: "diff, reach"
   behavior: default
   require_changes: false

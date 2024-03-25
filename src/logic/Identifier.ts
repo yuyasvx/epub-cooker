@@ -2,7 +2,9 @@ import { resolve } from "path";
 import { readFile, writeFile } from "fs/promises";
 import { v4 } from "uuid";
 import { EpubProject } from "../domain/value/EpubProject";
+import { asyncTryAsResult, isOk } from "../util/TryAsResult";
 import { asyncTryOrNothing } from "../util/TryOrNothing";
+import { getFile } from "../writer/FileIo";
 
 /**
  * ブックのIDを決定します。
@@ -20,9 +22,15 @@ export async function identify(directory: string, project: EpubProject) {
   if (projectIdentifier != null) {
     return projectIdentifier;
   }
-  const readIdentifier = await asyncTryOrNothing(() =>
-    readFile(resolve(directory, "identifier")).then((file) => file.toString()),
-  );
+
+  const readIdentifierResult = await asyncTryAsResult(() => getFile(resolve(directory, "identifier")));
+  const readIdentifier = isOk(readIdentifierResult)
+    ? readIdentifierResult
+        .get()
+        .map((file) => file.toString())
+        .getOrUndefined()
+    : undefined;
+
   if (readIdentifier != null) {
     return readIdentifier;
   }

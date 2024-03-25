@@ -1,6 +1,7 @@
 import type { Dirent } from "fs";
 import { resolve } from "path";
 import { readFile, readdir } from "fs/promises";
+import { ProjectFileNotFoundError } from "../domain/error/AppError";
 import { EpubProject } from "../domain/value/EpubProject";
 import { loadProjectFile } from "./ProjectLoader";
 import { validateProject } from "./ValidateProject";
@@ -65,7 +66,7 @@ describe("loadFromDirectory", () => {
     ${"project.yaml"}
   `("ディレクトリ直下の$fileNameが読み込めるとEpubProjectを取得できる", async ({ fileName }) => {
     const path = "/path/to/directory";
-    const filesOfDirectory = ["file1.txt", "file2.txt", fileName];
+    const filesOfDirectory = ["file1.txt", "file2.txt", "file3", fileName];
 
     jest.mocked(readdir).mockResolvedValue(filesOfDirectory as unknown[] as Dirent[]);
     jest.mocked(resolve).mockReturnValue("/path/to/resolved/directory");
@@ -85,7 +86,7 @@ describe("loadFromDirectory", () => {
     jest.mocked(readFile).mockResolvedValue(Buffer.from(yamlText));
     jest.mocked(validateProject).mockReturnValue(true);
 
-    expect(() => loadProjectFile(path)).rejects.toThrow();
+    expect(() => loadProjectFile(path)).rejects.toThrow(ProjectFileNotFoundError);
   });
 
   it("空ディレクトリの場合エラー", () => {
@@ -97,6 +98,6 @@ describe("loadFromDirectory", () => {
     jest.mocked(readFile).mockResolvedValue(Buffer.from(yamlText));
     jest.mocked(validateProject).mockReturnValue(true);
 
-    expect(() => loadProjectFile(path)).rejects.toThrow();
+    expect(() => loadProjectFile(path)).rejects.toThrow(ProjectFileNotFoundError);
   });
 });

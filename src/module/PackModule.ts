@@ -1,45 +1,38 @@
-import { createWriteStream } from "fs";
-import { resolve as resolvePath } from "path";
-import archiver from "archiver";
-import { readdir } from "fs/promises";
-import { until } from "../util/Until";
+import { join } from "path";
+import { NodeErrorType } from "../domain/enums/NodeJsErrorType";
+import { archiveDirectory } from "../logic/EpubArchiver";
+import { isOk } from "../util/TryAsResult";
+import { getDir, getStat } from "../writer/FileIo";
 
-export async function makeEpubArchive(sourceDirectory: string, destinationDirectory: string, title: string) {
-  await until(() => findEssentialItems(sourceDirectory));
+export async function pack(inputPath: string, outputPath: string) {
+  if (await isDirectory(outputPath)) {
+    return archiveDirectory(inputPath, outputPath, "book.epub");
+  }
+  const fileStat = (await getStat(outputPath)).getOrUndefined();
 
-  console.log("EPUBファイルの作成を行っています ...");
-  const sanitizedFileName = sanitizeFileName(title);
-  const output = createWriteStream(resolvePath(destinationDirectory, `${sanitizedFileName}.epub`));
-  const archive = archiver("zip");
+  if (fileStat != null) {
+    console.log("ファイルがすでに存在する");
+    return;
+  }
 
-  output.on("close", () => {
-    console.log("製本が完了しました。");
-    // resolve();
-  });
-  archive.on("error", (err) => {
-    throw err;
-  });
-  archive.append("application/epub+zip", {
-    store: true,
-    name: "mimetype",
-  });
-  archive.glob("*", { cwd: resolvePath(sourceDirectory), ignore: "mimetype" });
-  archive.glob("**/*", { cwd: resolvePath(sourceDirectory) });
-  archive.pipe(output);
-  return archive.finalize();
+  // .epubが含まれている場合は、それを一旦除外する
+  const savePath = outputPath.endsWith(".epub") ? outputPath.substring(0, outputPath.length - 5) : outputPath;
+  const separatedPaths = savePath.split("/");
+  await archiveDirectory(inputPath, join(savePath, "../"), separatedPaths[separatedPaths.length - 1]);
 }
 
-/**
- * WindowsやMacのファイルシステムで使っていけない記号を全て`_`に変換します
- * @param fileName ファイル名
- * @returns 変換済みのファイル名文字列
- */
-function sanitizeFileName(fileName: string) {
-  return fileName.replace(/[\:\\\/\*\?\"\<\>\|]\./, "_");
-}
+async function isDirectory(pathStr: string) {
+  const directory = true;
+  const result = await getDir(pathStr);
 
-async function findEssentialItems(sourceDirectory: string) {
-  // TODO 即席すぎる
-  const list = await readdir(sourceDirectory);
-  return list.includes("OPS") && list.includes("META-INF");
+  if (isOk(result)) {
+    return true;
+  }
+
+  if (result.get().errorType === NodeErrorType.NO_SUCH_FILE_OR_DIRECTORY) {
+    return false;
+  }
+
+  result.unwrap();
+  return directory;
 }

@@ -1,27 +1,29 @@
 import { program } from "commander";
-import { container } from "tsyringe";
-import { options } from "../command/CommandOptions";
-import { CookCommand } from "../command/CookCommand";
-import { NewCommand } from "../command/NewCommand";
-import { PackCommand } from "../command/PackCommand";
+import { CommandOption, options } from "../command/CommandOptions";
+import { cookCommand } from "../command/CookCommand";
+import { packCommand } from "../command/PackCommand";
 import { AppCommand } from "../domain/prototype/Command";
 
+// const commands = [
+//   container.resolve(CookCommand),
+//   container.resolve(NewCommand),
+//   container.resolve(PackCommand),
+// ] as AppCommand[];
+
 // 重要：AppCommandを実装したらcommandsに登録しないといけません
-const commands = [
-  container.resolve(CookCommand),
-  container.resolve(NewCommand),
-  container.resolve(PackCommand),
-] as AppCommand[];
+const commands: AppCommand[] = [cookCommand, packCommand];
+const commandOption = new CommandOption();
 
 export function initialize() {
   for (const c of commands) {
     const cmd = program.command(c.name);
     cmd.action(async () => {
       try {
-        await c.run();
+        await c.run(commandOption);
       } catch (err) {
-        if ((err as Error).message) {
-          console.error((err as Error).message);
+        if (err instanceof Error) {
+          console.error(err.message);
+          console.error(err.stack);
         }
       }
     });
