@@ -1,8 +1,6 @@
-import { Option } from "commander";
+import { CommandOption } from "../../command/CommandOptions";
 
 export interface AppCommand {
   readonly name: string;
-  // readonly arguments?: CommandArgument[];
-  readonly option?: Option;
-  run: () => void | Promise<void>;
+  run: (option: CommandOption) => void | Promise<void>;
 }

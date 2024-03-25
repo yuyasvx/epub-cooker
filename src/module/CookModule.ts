@@ -1,7 +1,7 @@
 import { createContext, start } from "../logic/BookProcessor";
+import { archiveDirectory } from "../logic/EpubArchiver";
 import { finalize } from "../logic/Finalizer";
 import { loadProjectFile } from "../logic/ProjectLoader";
-import { makeEpubArchive } from "./PackModule";
 
 export async function cook(projectDirectory: string, noPack = false, debug = false) {
   const proj = await loadProjectFile(projectDirectory);
@@ -17,7 +17,7 @@ export async function cook(projectDirectory: string, noPack = false, debug = fal
       return;
     }
 
-    makeEpubArchive(context.workingDirectory, context.projectDirectory, context.bookFileName);
+    await archiveDirectory(context.workingDirectory, context.projectDirectory, context.bookFileName);
   } finally {
     finalize(context, debug, noPack);
   }

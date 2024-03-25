@@ -1,5 +1,6 @@
 import { resolve } from "path";
 import { readFile, readdir } from "fs/promises";
+import { ProjectFileNotFoundError } from "../domain/error/AppError";
 import { EpubProject } from "../domain/value/EpubProject";
 import { asyncTryOrNothing } from "../util/TryOrNothing";
 import { parse } from "./ProjectParser";
@@ -16,14 +17,10 @@ const EXTENSIONS = ["yml", "yaml"] as const;
 export async function loadProjectFile(resolvedPath: string): Promise<EpubProject> {
   const projectFileName = await decideFileName(resolvedPath);
   if (projectFileName == null) {
-    throw new Error("PROJECT_NOT_FOUND");
+    throw new ProjectFileNotFoundError();
   }
-  try {
-    const rawText = (await readFile(resolve(resolvedPath, projectFileName))).toString();
-    return parse(rawText);
-  } catch (error) {
-    throw new Error("FAILED_TO_LOAD_PROJECT");
-  }
+  const rawText = (await readFile(resolve(resolvedPath, projectFileName))).toString();
+  return parse(rawText);
 }
 
 async function decideFileName(resolvedPath: string) {

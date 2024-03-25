@@ -2,7 +2,6 @@ import { Dirent } from "fs";
 import { join, resolve } from "path";
 import { readdir } from "fs/promises";
 import mime from "mime-types";
-import { BookContext } from "../../domain/data/EpubContext";
 import { CollectedItem } from "../../domain/value/CollectedItem";
 import { isIncluded } from "../../util/FileExclude";
 import { ItemCollector } from "./ItemCollector";
@@ -35,7 +34,7 @@ export const documentItemCollector: ItemCollector = {
    * @param project プロジェクト定義
    * @returns 収集したアイテムのリスト
    */
-  async collect(context: BookContext) {
+  async collect(context) {
     const dataSourceDir = context.dataSourceDirectory;
     const project = context.project;
     // FIXME 面倒なので一旦除外条件が自動の場合だけ、読み込むファイル形式を限定させ、マニュアル指定が入っている場合は何も限定させないことにしている
