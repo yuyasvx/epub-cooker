@@ -3,7 +3,6 @@ import { readFile, writeFile } from "fs/promises";
 import { v4 } from "uuid";
 import { EpubProject } from "../domain/value/EpubProject";
 import { asyncTryAsResult, isOk } from "../util/TryAsResult";
-import { asyncTryOrNothing } from "../util/TryOrNothing";
 import { getFile } from "../writer/FileIo";
 
 /**
@@ -23,13 +22,10 @@ export async function identify(directory: string, project: EpubProject) {
     return projectIdentifier;
   }
 
-  const readIdentifierResult = await asyncTryAsResult(() => getFile(resolve(directory, "identifier")));
-  const readIdentifier = isOk(readIdentifierResult)
-    ? readIdentifierResult
-        .get()
-        .map((file) => file.toString())
-        .getOrUndefined()
-    : undefined;
+  const readIdentifier = (await asyncTryAsResult(() => getFile(resolve(directory, "identifier"))))
+    .getOrUndefined()
+    ?.map((file) => file.toString())
+    .getOrUndefined();
 
   if (readIdentifier != null) {
     return readIdentifier;

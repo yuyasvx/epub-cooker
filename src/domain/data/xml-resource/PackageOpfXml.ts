@@ -51,8 +51,8 @@ export class PackageOpfXml extends XmlResource {
             },
             "dc:title": [{ _: "$title", $: { id: "title" } }],
             "dc:creator": [{ _: undefined as string | undefined, $: { id: "creator" } }],
-            "dc:publisher": [undefined as string | undefined],
-            "dc:date": ["" as string | undefined],
+            "dc:publisher": undefined as [string] | undefined,
+            "dc:date": undefined as [string] | undefined,
             "dc:language": [{ _: undefined as string | undefined, $: { id: "language" } }],
             meta: [] as MetadataEntry[],
             "dc:identifier": [{ _: undefined as string | undefined, $: { id: "book-id" } }],
@@ -78,21 +78,17 @@ export class PackageOpfXml extends XmlResource {
   };
 
   public static of(project: EpubProject, identifier: string) {
-    const lang = project.bookMetadata.language;
-    const title = project.bookMetadata.title;
-    const creator = project.bookMetadata.creator;
-    const publisher = project.bookMetadata.publisher;
-    const publishedDate = project.bookMetadata.publishedDate;
+    const { language, title, creator, publisher, publishedDate } = project.bookMetadata;
 
     const xml = new PackageOpfXml();
-    xml.setLanguage(lang);
+    xml.setLanguage(language);
     // TODO 各プロパティがundefinedだった場合、この書き方だとバグるので、undefinedならプロパティごと消し去るような挙動が良さそう
     xml.resource.content.package.metadata[0]["dc:title"][0]._ = title;
     xml.resource.content.package.metadata[0]["dc:creator"][0]._ = creator;
-    xml.resource.content.package.metadata[0]["dc:publisher"][0] = publisher;
+    xml.resource.content.package.metadata[0]["dc:publisher"] = publisher != null ? [publisher] : undefined;
     xml.resource.content.package.metadata[0]["dc:identifier"][0]._ = identifier;
-    xml.resource.content.package.metadata[0]["dc:date"][0] =
-      publishedDate != null ? getFormattedDate(publishedDate) : "";
+
+    xml.setPublisedDate(publishedDate);
     xml.setSpecifiedFonts(project.useSpecifiedFonts);
     xml.setPageProgression(project.pageProgression);
 
@@ -103,6 +99,15 @@ export class PackageOpfXml extends XmlResource {
     this.updateAdditionalMetadata();
     this.updateManifestItems();
     this.updateSpineItems();
+    // workaround
+    if (this.resource.content.package.metadata[0]["dc:publisher"] == null) {
+      // biome-ignore lint/performance/noDelete: <explanation>
+      delete this.resource.content.package.metadata[0]["dc:publisher"];
+    }
+    if (this.resource.content.package.metadata[0]["dc:date"] == null) {
+      // biome-ignore lint/performance/noDelete: <explanation>
+      delete this.resource.content.package.metadata[0]["dc:date"];
+    }
     return super.toXml();
   }
 
@@ -118,6 +123,14 @@ export class PackageOpfXml extends XmlResource {
 
   public setPageProgression(type: Case<typeof PageProgression>) {
     this.resource.content.package.spine[0].$["page-progression-direction"] = type;
+  }
+
+  public setPublisedDate(date?: Date) {
+    if (date != null) {
+      this.resource.content.package.metadata[0]["dc:date"] = [getFormattedDate(date)];
+      return;
+    }
+    this.resource.content.package.metadata[0]["dc:date"] = undefined;
   }
 
   public updateModifiedDateTime() {
