@@ -2,7 +2,7 @@ coverage:
   patch:
   default:
     informational: true
-comment:
-  layout: "diff, reach"
-  behavior: default
-  require_changes: false
+# comment:
+#   layout: "diff, reach"
+#   behavior: default
+#   require_changes: false
