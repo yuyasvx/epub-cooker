@@ -1,7 +1,7 @@
 import { resolve } from "path";
 import { EpubProject } from "../value/EpubProject";
 import { ManifestItem } from "../value/ManifestItem";
-import { SpineItems } from "../value/SpineItems";
+import { SpineItem } from "../value/SpineItem";
 import { ContainerXml } from "./xml-resource/ContainerXml";
 import { IBooksDisplayOptionsXml } from "./xml-resource/IBooksDisplayOptionsXml";
 
@@ -19,7 +19,7 @@ export type BookContext = {
   workingDirectory: string;
   identifier: string;
   loadedItems: ManifestItem[];
-  spineItems: SpineItems[];
+  spineItems: SpineItem[];
   bookFileName: string;
   useSpecifiedFonts: boolean;
 };
@@ -33,7 +33,7 @@ export class BookContextData implements BookContext {
   workingDirectory = "";
   identifier = "";
   loadedItems: ManifestItem[] = [];
-  spineItems: SpineItems[] = [];
+  spineItems: SpineItem[] = [];
   bookFileName = "";
   useSpecifiedFonts = false;
 
