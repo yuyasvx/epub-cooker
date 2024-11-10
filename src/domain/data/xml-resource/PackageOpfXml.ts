@@ -3,7 +3,7 @@ import { Case } from "../../enums/Case";
 import { PageProgression } from "../../enums/PageProgression";
 import { AdditionalMetadata, EpubProject } from "../../value/EpubProject";
 import { ManifestItem } from "../../value/ManifestItem";
-import { SpineItems } from "../../value/SpineItem";
+import { SpineItems } from "../../value/SpineItems";
 import { XmlResource } from "./XmlResource";
 
 type MetadataEntry<V = unknown> = Readonly<{

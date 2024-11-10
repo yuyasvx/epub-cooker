@@ -1,14 +1,9 @@
 import { program } from "commander";
-import { CommandOption, options } from "../command/CommandOptions";
-import { cookCommand } from "../command/CookCommand";
-import { packCommand } from "../command/PackCommand";
-import { AppCommand } from "../domain/prototype/Command";
-
-// const commands = [
-//   container.resolve(CookCommand),
-//   container.resolve(NewCommand),
-//   container.resolve(PackCommand),
-// ] as AppCommand[];
+import { CommandOption, options } from "./CommandOption";
+import { outputErrorMessage } from "./ErrorHandler";
+import { cookCommand } from "./command/CookCommand";
+import { packCommand } from "./command/PackCommand";
+import { AppCommand } from "./schema/AppCommand";
 
 // 重要：AppCommandを実装したらcommandsに登録しないといけません
 const commands: AppCommand[] = [cookCommand, packCommand];
@@ -21,10 +16,7 @@ export function initialize() {
       try {
         await c.run(commandOption);
       } catch (err) {
-        if (err instanceof Error) {
-          console.error(err.message);
-          console.error(err.stack);
-        }
+        outputErrorMessage(err);
       }
     });
   }

@@ -1,3 +1,9 @@
+/**
+ * @internal
+ * @param fullPath
+ * @param toExtension
+ * @returns
+ */
 export function changeExtension(fullPath: string, toExtension: string) {
   const tokens = fullPath.split(".");
   if (tokens.length === 0) {
