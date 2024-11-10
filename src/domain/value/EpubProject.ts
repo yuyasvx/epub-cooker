@@ -8,7 +8,7 @@ export type EpubProject = Readonly<
   {
     version: number;
     bookMetadata: BookMetadata;
-    additionalMetadata: AdditionalMetadata[];
+    additionalMetadata?: AdditionalMetadata[];
     identifier?: string;
     pageProgression: Case<typeof PageProgression>;
     useSpecifiedFonts: boolean;

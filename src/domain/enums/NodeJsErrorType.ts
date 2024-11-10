@@ -1,5 +1,8 @@
 import { Case } from "./Case";
 
+/**
+ * @internal
+ */
 export const NodeErrorType = {
   /** An attempt was made to access a file in a way forbidden by its file access permissions. */
   PERMISSION_DENIED: "EACCES",
@@ -43,9 +46,21 @@ export const NodeErrorType = {
   /** A connect or send request failed because the connected party did not properly respond after a period of time. Usually encountered by http or net. Often a sign that a socket.end() was not properly called. */
   OPERATION_TIMED_OUT: "ETIMEDOUT",
 
+  /** Indicates that there is no space available on the device. */
+  NO_SPACE_LEFT: "ENOSPC",
+
+  DEVICE_OR_RESOURCE_IS_BUSY: "EBUSY",
+
+  READ_ONLY: "EROFS",
+
   UNKNOWN: "__UNKNOWN",
 } as const;
 
+/**
+ * @internal
+ * @param code
+ * @returns guard result
+ */
 export function isNodeJsErrorType(code: string): code is Case<typeof NodeErrorType> {
   return Object.values(NodeErrorType).some((val) => val === code);
 }

@@ -1,4 +1,3 @@
-import "reflect-metadata";
-import { initialize } from "./app/Initializer";
+import { initialize } from "./app/initializer";
 
 initialize();

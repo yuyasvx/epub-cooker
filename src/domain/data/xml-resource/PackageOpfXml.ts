@@ -3,7 +3,7 @@ import { Case } from "../../enums/Case";
 import { PageProgression } from "../../enums/PageProgression";
 import { AdditionalMetadata, EpubProject } from "../../value/EpubProject";
 import { ManifestItem } from "../../value/ManifestItem";
-import { SpineItems } from "../../value/SpineItem";
+import { SpineItem } from "../../value/SpineItem";
 import { XmlResource } from "./XmlResource";
 
 type MetadataEntry<V = unknown> = Readonly<{
@@ -29,7 +29,7 @@ export class PackageOpfXml extends XmlResource {
     { key: "ibooks:version", value: "3.0" },
     { key: "ibooks:specified-fonts", value: false },
   ] as AdditionalMetadata[];
-  spineItems = [] as SpineItems[];
+  spineItems = [] as SpineItem[];
 
   resource = {
     decleration: `<?xml version="1.0" encoding="UTF-8"?>`,

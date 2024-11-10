@@ -15,6 +15,7 @@
     "archiver": "^6.0.1",
     "commander": "^12.0.0",
     "date-fns": "^3.3.1",
+    "effect": "^3.7.3",
     "markdown-it": "^14.0.0",
     "markdown-it-obsidian-images": "^1.0.1",
     "micromatch": "^4.0.5",

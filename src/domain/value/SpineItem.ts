@@ -1,4 +1,4 @@
-export type SpineItems = Readonly<{
+export type SpineItem = Readonly<{
   id: string;
   linear: boolean;
 }>;
