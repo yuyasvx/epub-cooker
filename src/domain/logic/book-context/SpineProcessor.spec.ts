@@ -1,5 +1,5 @@
-import { ManifestItem } from "../value/ManifestItem";
-import { SpineItem } from "../value/SpineItem";
+import { ManifestItem } from "../../value/ManifestItem";
+import { SpineItem } from "../../value/SpineItem";
 import { processSpine } from "./SpineProcessor";
 
 describe("SpineProcessor", () => {
