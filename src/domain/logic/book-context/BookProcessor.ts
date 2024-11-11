@@ -6,7 +6,7 @@ import { ManifestItem } from "../../../domain/value/ManifestItem";
 import { AbstractError } from "../../../error/AbstractError";
 import * as xmlResourceIo from "../../../io/XmlResourceIo";
 import { runThrowing, throwsAsync } from "../../../util/EffectUtil";
-import { processSpine } from "../SpineProcessor";
+import { processSpine } from "./SpineProcessor";
 import { documentItemCollector } from "../item-collector/DocumentItemCollector";
 import { ItemCollector } from "../item-collector/ItemCollector";
 import { documentItemProcessor } from "../item-processor/DocumentItemProcessor";

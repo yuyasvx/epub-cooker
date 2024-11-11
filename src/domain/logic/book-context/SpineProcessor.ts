@@ -1,5 +1,5 @@
-import { ManifestItem } from "../../domain/value/ManifestItem";
-import { SpineItem } from "../value/SpineItem";
+import { ManifestItem } from "../../value/ManifestItem";
+import { SpineItem } from "../../value/SpineItem";
 
 export function processSpine(items: ManifestItem[], visibleTocFile = true) {
   const sortedItems = [...items.filter((itm) => itm.mediaType === "application/xhtml+xml")];
