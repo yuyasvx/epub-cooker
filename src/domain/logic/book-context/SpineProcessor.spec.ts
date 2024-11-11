@@ -1,6 +1,6 @@
 import { ManifestItem } from "../../value/ManifestItem";
 import { SpineItem } from "../../value/SpineItem";
-import { processSpine } from "../SpineProcessor";
+import { processSpine } from "./SpineProcessor";
 
 describe("SpineProcessor", () => {
   it("マニフェストアイテムを読み込んで、ページの順番を決定づけるspine要素の元となるデータに変換", () => {
