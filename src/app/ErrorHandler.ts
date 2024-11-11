@@ -2,8 +2,14 @@ import { AbstractError } from "../error/AbstractError";
 import { AppError, ProjectFileNotFoundError } from "../error/AppError";
 import { FileIoError } from "../io/error/FileIoError";
 import { CommandParameterError } from "./error/CommandParameterError";
+import { ProcessInterruptedError } from "./error/ProcessInterruptedError";
 
 export function outputErrorMessage(error: unknown) {
+  if (error instanceof ProcessInterruptedError) {
+    console.log("処理は中断されました。");
+    return;
+  }
+
   if (error instanceof AbstractError) {
     handleInternalError(error);
     error.cause != null && console.error(error.cause);

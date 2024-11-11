@@ -3,7 +3,7 @@ import { Effect } from "effect";
 import { throws } from "../../util/EffectUtil";
 import { UnknownValue } from "../../util/UnknownValue";
 import { BookType } from "../enums/BookType";
-import { Case } from "../enums/Case";
+import { Case } from "../../util/Case";
 import { ItemSortType } from "../enums/ItemSortType";
 import { PageProgression } from "../enums/PageProgression";
 import {

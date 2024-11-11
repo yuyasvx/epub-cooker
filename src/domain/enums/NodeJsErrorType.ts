@@ -1,4 +1,4 @@
-import { Case } from "./Case";
+import { Case } from "../../util/Case";
 
 /**
  * @internal
