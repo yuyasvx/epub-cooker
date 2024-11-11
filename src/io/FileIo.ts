@@ -3,7 +3,7 @@ import { Stream } from "node:stream";
 import { resolve as resolvePath } from "path";
 import { Effect } from "effect";
 import { catchIf, succeed, tryPromise } from "effect/Effect";
-import { Case } from "../domain/enums/Case";
+import { Case } from "../util/Case";
 import { NodeErrorType } from "../domain/enums/NodeJsErrorType";
 import { runThrowing } from "../util/EffectUtil";
 import { FileIoError, FileNotFoundError } from "./error/FileIoError";

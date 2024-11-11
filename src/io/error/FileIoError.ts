@@ -1,4 +1,4 @@
-import { Case } from "../../domain/enums/Case";
+import { Case } from "../../util/Case";
 import { NodeErrorType } from "../../domain/enums/NodeJsErrorType";
 import { AppError } from "../../error/AppError";
 

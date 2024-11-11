@@ -1,5 +1,5 @@
 import { getFormattedDate, getFormattedDateTime } from "../../../util/FormattedDateTime";
-import { Case } from "../../enums/Case";
+import { Case } from "../../../util/Case";
 import { PageProgression } from "../../enums/PageProgression";
 import { AdditionalMetadata, EpubProject } from "../../value/EpubProject";
 import { ManifestItem } from "../../value/ManifestItem";
