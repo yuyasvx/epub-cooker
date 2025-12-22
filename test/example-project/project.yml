@@ -1,0 +1,9 @@
+version: 2
+metadata:
+  title: 吾輩は猫である
+  language: ja
+  description: あらすじ
+  identifier: hello-example
+
+source:
+  using: "markdown"

@@ -1,0 +1,8 @@
+version: 2
+metadata:
+  title: 吾輩は猫である
+  language: ja
+  description: あらすじ
+
+source:
+  using: "markdown"
