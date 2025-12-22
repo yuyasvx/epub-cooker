@@ -1,8 +1,9 @@
-coverage:
-  patch:
-  default:
-    informational: true
-# comment:
-#   layout: "diff, reach"
-#   behavior: default
+# coverage:
+#   status:
+#     project:
+#       default:
+#         informational: true
+comment:
+  layout: "diff, reach"
+  behavior: default
 #   require_changes: false
