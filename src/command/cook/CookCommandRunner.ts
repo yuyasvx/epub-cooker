@@ -37,8 +37,8 @@ export function cook(projectDir: ResolvedPath, noPack = false) {
     .orTee(() => epubCookerEvent.offAll());
 }
 
-function finalize(workingDir: ResolvedPath, debug = false) {
-  return debug
+function finalize(workingDir: ResolvedPath, keepWorkingContents = false) {
+  return keepWorkingContents
     ? FileIo.move(
         workingDir,
         resolvePath(workingDir, '..', `working-contents-${format(new Date(), 'yyyyMMdd-HHmmss')}`),

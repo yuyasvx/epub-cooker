@@ -45,7 +45,7 @@ export const runMarkdownItemProcessor: ItemProcessor = (file, contentsDir, saveD
       }
 
       if (cssPath != null) {
-        cssPaths.push();
+        cssPaths.push(cssPath);
       }
 
       return {

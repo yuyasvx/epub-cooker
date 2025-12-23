@@ -85,8 +85,8 @@ export function EpubProjectV2(value: object) {
 
 EpubProjectV2.validateSourceHandingType = function (project: EpubProjectV2) {
   return fails<IllegalSourceHandlingTypeError>().run(() => {
-    if (project.source.using === SourceHandlingType.photo) {
-      throw new IllegalSourceHandlingTypeError(PageLayoutType.reflow, project.source.using);
+    if (project.source.using === SourceHandlingType.photo && project.book['layout-type'] === PageLayoutType.reflow) {
+      throw new IllegalSourceHandlingTypeError(project.book['layout-type'], project.source.using);
     }
     return project;
   });

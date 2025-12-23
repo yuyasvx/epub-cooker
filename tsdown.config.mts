@@ -1,5 +1,5 @@
-import { fixImportsPlugin } from 'esbuild-fix-imports-plugin';
-import { defineConfig } from 'tsup';
+// import { fixImportsPlugin } from 'esbuild-fix-imports-plugin';
+import { defineConfig } from 'tsdown';
 
 const envName = process.env.ENV_NAME;
 
@@ -9,12 +9,12 @@ export default defineConfig({
   target: 'node22',
   dts: true,
   clean: true,
-  splitting: false,
+  // splitting: false,
   sourcemap: envName === 'local',
   outDir: 'dist',
   tsconfig: 'tsconfig.build.json',
   skipNodeModulesBundle: true,
-  bundle: false,
-  esbuildPlugins: [fixImportsPlugin()],
+  unbundle: true,
+  // plugins: [fixImportsPlugin()],
   minify: envName !== 'local',
 });
