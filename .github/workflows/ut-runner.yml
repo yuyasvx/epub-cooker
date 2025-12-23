@@ -1,0 +1,42 @@
+name: _Unit Test Runner
+
+on:
+  workflow_call:
+    inputs:
+      collect-coverage:
+        description: "カバレッジ集計を行ってテストするか"
+        required: false
+        default: true
+        type: boolean
+
+env:
+  WORKING_DIRECTORY: ./
+
+jobs:
+  Test:
+    name: Run test codes
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 #6.0.1
+      - name: Setup Node.js
+        uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f #6.1.0
+        with:
+          node-version: 24.12.0
+          cache: "npm"
+          cache-dependency-path: "**/package-lock.json"
+      - name: Install dependencies
+        run: npm ci
+      - name: Run unit test
+        if: inputs.collect-coverage != true
+        run: npm run test
+      - name: Run unit test with coverage
+        if: inputs.collect-coverage == true
+        run: npm run test:coverage
+      - name: Send coverage report to Codecov
+        if: inputs.collect-coverage == true
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de #5.5.2
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage/cobertura-coverage.xml
+          slug: yuyasvx/epub-cooker

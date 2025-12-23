@@ -1,18 +1,25 @@
 {
-    "compilerOptions": {
-        "target": "ES2022",
-        "lib": ["ESNext"],
-        "allowJs": false,
-        "skipLibCheck": true,
-        "strict": true,
-        "module": "Node16",
-        "moduleResolution": "Node16",
-        "resolveJsonModule": true,
-        "isolatedModules": true,
-        "incremental": true,
-        "experimentalDecorators": true,
-        "emitDecoratorMetadata": true,
-        "esModuleInterop":true
-    },
-    "exclude": ["node_modules", "coverage"]
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "allowJs": true,
+    "moduleDetection": "force",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "declaration": true,
+    "stripInternal": true,
+    "verbatimModuleSyntax": true,
+    "forceConsistentCasingInFileNames": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "incremental": false,
+    "rootDir": "./src",
+    "outDir": "./dist"
+  },
+  "include": ["./src"]
 }
