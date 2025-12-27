@@ -6,6 +6,7 @@ import { printWarnMessage } from '../../app/print/PrintWarnMessage';
 import { archiveDirectory } from '../../feature/archiver';
 import { decideIdentifier } from '../../feature/book-identification';
 import { epubCookerEvent, EpubCookerEventType } from '../../feature/event-emitter';
+import { _getEventEmitter } from '../../feature/event-emitter/InitEvent';
 import { loadContentsItem } from '../../feature/item-loader';
 import { saveMarkupStructure } from '../../feature/metadata-generator';
 import { type LoadedProject, loadProject } from '../../feature/project-loader';
@@ -38,12 +39,12 @@ export function cook(projectDir: ResolvedPath, noPack = false) {
 }
 
 function finalize(workingDir: ResolvedPath, keepWorkingContents = false) {
-  return keepWorkingContents
-    ? FileIo.move(
-        workingDir,
-        resolvePath(workingDir, '..', `working-contents-${format(new Date(), 'yyyyMMdd-HHmmss')}`),
-      )
-    : FileIo.remove(workingDir);
+  if (keepWorkingContents) {
+    const destination = resolvePath(workingDir, '..', `working-contents-${format(new Date(), 'yyyyMMdd-HHmmss')}`);
+    _getEventEmitter().emit(EpubCookerEventType.FINISHED_WITHOUT_ARCHIVE, destination);
+    return FileIo.move(workingDir, destination);
+  }
+  return FileIo.remove(workingDir);
 }
 
 function prepareEvents() {
@@ -53,10 +54,24 @@ function prepareEvents() {
   });
 
   epubCookerEvent.on(EpubCookerEventType.NO_TOC, () => {
-    printWarnMessage('このEPUBプロジェクトには目次が定義されていません。');
+    printWarnMessage('このEPUBプロジェクトには目次が定義されていません');
   });
 
-  epubCookerEvent.on(EpubCookerEventType.FINISHED, () => {
+  epubCookerEvent.on(EpubCookerEventType.FINISHED, ([, destination]) => {
+    printDoneMessage('製本完了');
     console.log(chalk.hex('#00cde0')(`🎉 EPUBの生成が完了しました！`));
+    console.log(chalk.gray(destination));
+  });
+
+  epubCookerEvent.on(EpubCookerEventType.FINISHED_WITHOUT_ARCHIVE, (destination) => {
+    printDoneMessage('処理終了');
+    console.log('EPUBファイルのコンテンツの変換結果を下記に出力しました');
+    console.log(chalk.gray(destination));
+  });
+
+  epubCookerEvent.on(EpubCookerEventType.PAGE_NOT_FOUND, (pagePath) => {
+    printWarnMessage(
+      `処理対象のページとして指定されているページのうち、次は見つかりませんでした: ${chalk.gray(pagePath)}`,
+    );
   });
 }

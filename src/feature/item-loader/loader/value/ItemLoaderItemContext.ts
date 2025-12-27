@@ -1,12 +1,12 @@
 import mime from 'mime-types';
-import { pipe, throwing } from '../../../../lib/util/EffectUtil';
+import { pipe, unwrap } from '../../../../lib/util/EffectUtil';
 import type { EpubProjectV2 } from '../../../../value/EpubProject';
 import { ItemPath } from '../../../../value/ItemPath';
 import type { ResolvedPath } from '../../../../value/ResolvedPath';
 
 /** @internal */
 export function ItemLoaderItemContext(filePath: ResolvedPath, project: EpubProjectV2, contentsDir: ResolvedPath) {
-  const fileType = throwing(pipe(mime.lookup(filePath)).map((m) => (m === false ? undefined : m)));
+  const fileType = unwrap(pipe(mime.lookup(filePath)).map((m) => (m === false ? undefined : m)));
 
   const isMarkdown = fileType === 'text/markdown';
   const isHtml = fileType === 'text/html';
@@ -25,8 +25,11 @@ export function ItemLoaderItemContext(filePath: ResolvedPath, project: EpubProje
   };
 }
 
+type TItemLoaderItemContext = ReturnType<typeof ItemLoaderItemContext>;
+
 /** @internal */
-export type ItemLoaderItemContext = ReturnType<typeof ItemLoaderItemContext>;
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface ItemLoaderItemContext extends TItemLoaderItemContext {}
 
 function isCoverimage(filePath: ResolvedPath, coverImagePath: string | undefined, contentsDir: ResolvedPath) {
   const itemPath = ItemPath.createFromRelative(contentsDir, filePath);

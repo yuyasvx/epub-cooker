@@ -6,16 +6,19 @@ import type { EpubProjectV2 } from '../../value/EpubProject';
  * @internal
  */
 export function printProjectOverviewTable(project: EpubProjectV2, loadedFiles: unknown[], blankLine = true) {
-  console.log(`${blankLine ? '\n' : ''}${content(project)}\n\n${fileCounts(loadedFiles)}`);
+  console.log(
+    `${blankLine ? '\n' : ''}${content(project)}\n\n${fileCounts(loadedFiles)}${pageList(project.source.pages)}`,
+  );
 }
 
 function content(project: EpubProjectV2) {
   return columnify(
     {
-      [propertyKey('title')]: project.metadata.title,
-      ...(project.metadata.author ? { [propertyKey('author')]: project.metadata.author } : {}),
-      ...(project.metadata.publisher ? { [propertyKey('publisher')]: project.metadata.publisher } : {}),
-      [propertyKey('language')]: project.metadata.language,
+      [propertyKey('作品名')]: project.metadata.title,
+      ...(project.metadata.author ? { [propertyKey('著者')]: project.metadata.author } : {}),
+      ...(project.metadata.publisher ? { [propertyKey('出版社')]: project.metadata.publisher } : {}),
+      ...(project.metadata['published-date'] ? { [propertyKey('発売日')]: project.metadata['published-date'] } : {}),
+      [propertyKey('言語')]: project.metadata.language,
     },
     {
       showHeaders: false,
@@ -34,4 +37,11 @@ function propertyKey(keyName: string) {
 
 function bullet() {
   return chalk.hex('#ffe600')('- ');
+}
+
+function pageList(pagePaths?: string[]) {
+  if (pagePaths == null) {
+    return '';
+  }
+  return `\n${bullet()}処理対象のページ:\n${chalk.gray(pagePaths.map((p) => `  - ${p}`).join('\n'))}`;
 }
