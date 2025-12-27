@@ -48,6 +48,9 @@ export const rejecting = <T, E>(result: ResultAsync<T, E> | Promise<Result<T, E>
 };
 
 /** @internal */
+export const unwrap = <T>(result: Result<T, never>): T => result.unwrapOr(undefined) as T;
+
+/** @internal */
 export const pipe = <T>(value: T) => ok(value);
 
 /** @internal */

@@ -1,8 +1,8 @@
 import { okAsync, ResultAsync } from 'neverthrow';
 import { SourceHandlingType } from '../../../enums/SourceHandlingType';
-import { pipe, throwing } from '../../../lib/util/EffectUtil';
+import { pipe, throwing, unwrap } from '../../../lib/util/EffectUtil';
 import type { ItemPath } from '../../../value/ItemPath';
-import type { ResolvedPath } from '../../../value/ResolvedPath';
+import { type ResolvedPath, resolvePath } from '../../../value/ResolvedPath';
 import { EpubCookerEventType } from '../../event-emitter';
 import { _getEventEmitter } from '../../event-emitter/InitEvent';
 import type { LoadedProject } from '../../project-loader';
@@ -18,26 +18,61 @@ import { ProcessedItem } from './value/ProcessedItem';
 /** @internal */
 export const loadReflowContents: ContentsLoader = function (loadedProject: LoadedProject, saveTo: ResolvedPath) {
   const { contentsDir, loadedFiles, projectDefinition } = loadedProject;
+  const itemContexts = loadedFiles.map((item) => ItemLoaderItemContext(item, projectDefinition, contentsDir));
 
-  return ResultAsync.combine(
-    loadedFiles
-      .map((item) => ItemLoaderItemContext(item, projectDefinition, contentsDir))
-      .map((ctx) => {
-        if (isPageContent(ctx, projectDefinition.source.using)) {
-          return runItemProcessorAsPageContent(ctx, contentsDir, saveTo, projectDefinition.source['css-path']).map(
-            // TODO projectDefinition.source['css-path']を直接当てている これは安全ではないので辞めたい
-            (itemPath) => createPageProcessedItem(itemPath, ctx),
-          );
-        } else {
-          return runFileCopyItemProcessor(ctx.filePath, contentsDir, saveTo).map((itemPath) =>
-            createAssetProcessedItem(itemPath, ctx),
-          );
-        }
-      }),
-  )
+  const pageItemContexts = unwrap(
+    pipe(itemContexts)
+      .map((c) => c.filter((ctx) => isPageContent(ctx, projectDefinition.source.using)))
+      .map((c) => customizePageList(c, projectDefinition.source.pages, contentsDir)),
+  );
+  const assetItemContexts = itemContexts.filter((ctx) => !isPageContent(ctx, projectDefinition.source.using));
+
+  return ResultAsync.combine([
+    ...pageItemContexts.map((ctx) =>
+      runItemProcessorAsPageContent(ctx, contentsDir, saveTo, projectDefinition.source['css-path']).map(
+        // TODO projectDefinition.source['css-path']を直接当てている これは安全ではないので辞めたい
+        (itemPath) => createPageProcessedItem(itemPath, ctx),
+      ),
+    ),
+    ...assetItemContexts.map((ctx) =>
+      runFileCopyItemProcessor(ctx.filePath, contentsDir, saveTo).map((itemPath) =>
+        createAssetProcessedItem(itemPath, ctx),
+      ),
+    ),
+  ])
     .andThen((items) => validateToc(items, saveTo))
     .map((items) => [loadedProject, items] as const);
 };
+
+/**
+ * プロジェクト定義の指定されたページファイルがあれば、そのページのみを製本の対象にします。
+ *
+ * ページの並び順も指定されたページファイルに合わせます
+ *
+ * @param itemContexts 読み込み予定のアイテム情報
+ * @param pagePaths
+ * @param contentsDir
+ * @returns
+ */
+function customizePageList(
+  itemContexts: ItemLoaderItemContext[],
+  pagePaths: string[] | undefined,
+  contentsDir: ResolvedPath,
+): ItemLoaderItemContext[] {
+  if (pagePaths == null) {
+    return itemContexts;
+  }
+  return pagePaths
+    .map((p) => {
+      const resolvedPath = resolvePath(contentsDir, p);
+      const ctx = itemContexts.find((item) => item.filePath === resolvedPath);
+      if (ctx == null) {
+        _getEventEmitter().emit(EpubCookerEventType.PAGE_NOT_FOUND, p);
+      }
+      return ctx;
+    })
+    .filter((ctx): ctx is ItemLoaderItemContext => ctx != null);
+}
 
 function isPageContent({ isHtml, isMarkdown, isXhtml }: ItemLoaderItemContext, using: SourceHandlingType) {
   if (using === SourceHandlingType.markdown) {

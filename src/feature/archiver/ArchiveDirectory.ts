@@ -24,7 +24,10 @@ export function archiveDirectory(
         const archive = archiver('zip');
 
         output.on('close', () => {
-          _getEventEmitter().emit(EpubCookerEventType.FINISHED, project);
+          _getEventEmitter().emit(EpubCookerEventType.FINISHED, [
+            project,
+            resolvePath(saveDir, `${sanitizedFileName}`),
+          ]);
 
           return resolve(undefined);
         });

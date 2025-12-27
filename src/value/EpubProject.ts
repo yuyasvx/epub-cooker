@@ -67,6 +67,7 @@ export const epubProjectV2Schema = z.object({
     'css-path': z.string().optional(),
     contents: z.string().optional().default('contents'),
     'cover-image-path': z.string().optional(),
+    pages: z.array(z.string()).optional(),
   }),
 });
 
