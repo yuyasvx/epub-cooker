@@ -1,6 +1,7 @@
 import { okAsync, ResultAsync } from 'neverthrow';
 import { SourceHandlingType } from '../../../enums/SourceHandlingType';
-import { pipe, throwing, unwrap } from '../../../lib/util/EffectUtil';
+import { pipe, throwing } from '../../../lib/util/EffectUtil';
+import type { EpubProjectV2 } from '../../../value/EpubProject';
 import type { ItemPath } from '../../../value/ItemPath';
 import { type ResolvedPath, resolvePath } from '../../../value/ResolvedPath';
 import { EpubCookerEventType } from '../../event-emitter';
@@ -20,11 +21,7 @@ export const loadReflowContents: ContentsLoader = function (loadedProject: Loade
   const { contentsDir, loadedFiles, projectDefinition } = loadedProject;
   const itemContexts = loadedFiles.map((item) => ItemLoaderItemContext(item, projectDefinition, contentsDir));
 
-  const pageItemContexts = unwrap(
-    pipe(itemContexts)
-      .map((c) => c.filter((ctx) => isPageContent(ctx, projectDefinition.source.using)))
-      .map((c) => customizePageList(c, projectDefinition.source.pages, contentsDir)),
-  );
+  const pageItemContexts = filterPageItemContexts(itemContexts, projectDefinition, contentsDir);
   const assetItemContexts = itemContexts.filter((ctx) => !isPageContent(ctx, projectDefinition.source.using));
 
   return ResultAsync.combine([
@@ -44,6 +41,15 @@ export const loadReflowContents: ContentsLoader = function (loadedProject: Loade
     .map((items) => [loadedProject, items] as const);
 };
 
+function filterPageItemContexts(
+  itemContexts: ItemLoaderItemContext[],
+  project: EpubProjectV2,
+  contentsDir: ResolvedPath,
+) {
+  const allPageItemContexts = itemContexts.filter((ctx) => isPageContent(ctx, project.source.using));
+  return customizePageList(allPageItemContexts, project.source.pages, contentsDir);
+}
+
 /**
  * プロジェクト定義の指定されたページファイルがあれば、そのページのみを製本の対象にします。
  *
@@ -62,10 +68,15 @@ function customizePageList(
   if (pagePaths == null) {
     return itemContexts;
   }
+  const itemContextsByPath = new Map<ResolvedPath, ItemLoaderItemContext>();
+  for (const ctx of itemContexts) {
+    itemContextsByPath.set(ctx.filePath, ctx);
+  }
+
   return pagePaths
     .map((p) => {
       const resolvedPath = resolvePath(contentsDir, p);
-      const ctx = itemContexts.find((item) => item.filePath === resolvedPath);
+      const ctx = itemContextsByPath.get(resolvedPath);
       if (ctx == null) {
         _getEventEmitter().emit(EpubCookerEventType.PAGE_NOT_FOUND, p);
       }
