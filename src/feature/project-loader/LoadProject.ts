@@ -1,7 +1,8 @@
 import yaml from 'yaml';
 import * as FileIo from '../../lib/file-io/FileIo';
-import { rejects, tryThrows } from '../../lib/util/EffectUtil';
+import { tryRejects, tryThrows } from '../../lib/util/EffectUtil';
 import { EpubProjectV2 } from '../../value/EpubProject';
+import { InputFileDetail } from '../../value/InputFileDetail';
 import { type ResolvedPath, resolvePath } from '../../value/ResolvedPath';
 import { EpubCookerEventType } from '../event-emitter';
 import { _getEventEmitter } from '../event-emitter/InitEvent';
@@ -24,8 +25,7 @@ function determineProjectFile(projectDir: ResolvedPath) {
 }
 
 function loadProjectDefinition(projectDir: ResolvedPath) {
-  return rejects<never>()
-    .run(() => determineProjectFile(projectDir))
+  return tryRejects<never>()(() => determineProjectFile(projectDir))
     .andThen((projectFilePath) =>
       tryThrows<ProjectNotFoundError>()(() => {
         if (projectFilePath == null) {
@@ -42,15 +42,15 @@ function loadProjectDefinition(projectDir: ResolvedPath) {
 export function loadProject(projectDirPath: ResolvedPath) {
   return loadProjectDefinition(projectDirPath)
     .andThen((proj) =>
-      loadContents(projectDirPath, proj).map(
-        (contents) =>
-          ({
-            loadedFiles: contents,
-            projectDefinition: proj,
-            projectDir: projectDirPath,
-            contentsDir: resolvePath(projectDirPath, proj.source.contents),
-          }) satisfies LoadedProject,
-      ),
+      loadContents(projectDirPath, proj).map((contents) => {
+        const contentsDir = resolvePath(projectDirPath, proj.source.contents);
+        return {
+          inputFiles: contents.map((c) => InputFileDetail(c, proj, contentsDir)),
+          projectDefinition: proj,
+          projectDir: projectDirPath,
+          contentsDir,
+        } satisfies LoadedProject;
+      }),
     )
     .andTee((l) => {
       _getEventEmitter().emit(EpubCookerEventType.PROJECT_LOADED, l);

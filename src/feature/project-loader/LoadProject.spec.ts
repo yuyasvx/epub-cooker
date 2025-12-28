@@ -19,7 +19,7 @@ describe('loadProject', () => {
       loadProject(resolvePath(__dirname, `../../../test/determine-project-file/${targetPath}`)),
     );
     expect(file).toStrictEqual({
-      loadedFiles: [],
+      inputFiles: [],
       projectDefinition: {
         metadata: {
           description: 'あらすじ',

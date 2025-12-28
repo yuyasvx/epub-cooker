@@ -1,10 +1,15 @@
 import { okAsync } from 'neverthrow';
 import { afterEach, describe, expect, test, vi } from 'vitest';
+import { PageLayoutType } from '../../../enums/PageLayoutType';
+import { PageProgressionDirectionType } from '../../../enums/PageProgressionDirectionType';
 import { SourceHandlingType } from '../../../enums/SourceHandlingType';
+import { rejecting } from '../../../lib/util/EffectUtil';
 import type { EpubProjectV2 } from '../../../value/EpubProject';
+import { InputFileDetail } from '../../../value/InputFileDetail';
 import { ItemPath } from '../../../value/ItemPath';
-import { resolvePath } from '../../../value/ResolvedPath';
+import { type ResolvedPath, resolvePath } from '../../../value/ResolvedPath';
 import { EpubCookerEventType } from '../../event-emitter';
+import type { LoadedProject } from '../../project-loader';
 import { runAutoEmptyTocItemProcessor } from '../processor/AutoEmptyTocProcessor';
 import { runFileCopyItemProcessor } from '../processor/FileCopyItemProcessor';
 import { runHtmlItemProcessor } from '../processor/HtmlItemProcessor';
@@ -52,17 +57,25 @@ const createLoadedProject = (files: string[], sourceConfig: Partial<EpubProjectV
   };
 
   const projectDefinition = {
+    version: 2,
     source: { ...defaultSource, ...sourceConfig },
-    book: {},
-    metadata: {},
-  } as unknown as EpubProjectV2;
+    book: {
+      'layout-type': PageLayoutType.reflow,
+      'page-progression-direction': PageProgressionDirectionType.ltr,
+      'use-specified-fonts': false,
+    },
+    metadata: {
+      title: 'book title test',
+      language: 'ja',
+    },
+  } satisfies EpubProjectV2;
 
   return {
     projectDefinition,
-    loadedFiles: files.map((f) => resolvePath(contentsDir, f)),
+    inputFiles: files.map((f) => InputFileDetail(f as ResolvedPath, projectDefinition, contentsDir)),
     projectDir: projectRoot,
     contentsDir,
-  };
+  } satisfies LoadedProject;
 };
 
 describe('ReflowContentsLoader', () => {
@@ -94,12 +107,32 @@ describe('ReflowContentsLoader', () => {
     );
 
     expect(runMarkdownItemProcessor).toHaveBeenCalledWith(
-      expect.stringContaining('page1.md'),
+      {
+        coverImage: false,
+        filePath: 'page1.md',
+        fileType: 'text/markdown',
+        isHtml: false,
+        isMarkdown: true,
+        isXhtml: false,
+        toc: false,
+      },
       contentsDir,
       saveTo,
       undefined,
     );
-    expect(runFileCopyItemProcessor).toHaveBeenCalledWith(expect.stringContaining('image.png'), contentsDir, saveTo);
+    expect(runFileCopyItemProcessor).toHaveBeenCalledWith(
+      {
+        coverImage: false,
+        filePath: 'image.png',
+        fileType: 'image/png',
+        isHtml: false,
+        isMarkdown: false,
+        isXhtml: false,
+        toc: false,
+      },
+      contentsDir,
+      saveTo,
+    );
     // 目次がないので自動生成が呼ばれる
     expect(runAutoEmptyTocItemProcessor).toHaveBeenCalled();
     expect(mockEmit).toHaveBeenCalledWith(EpubCookerEventType.NO_TOC);
@@ -107,21 +140,23 @@ describe('ReflowContentsLoader', () => {
 
   test('指定されたページ順序に従って処理する', async () => {
     // Arrange
-    const loadedProject = createLoadedProject(['page2.md', 'page1.md', 'page3.md'], {
-      pages: ['page1.md', 'page2.md'],
-    });
-    vi.mocked(runMarkdownItemProcessor).mockImplementation((path) => {
-      if (path.endsWith('page1.md')) return okAsync(ItemPath('page1.xhtml'));
-      if (path.endsWith('page2.md')) return okAsync(ItemPath('page2.xhtml'));
+    const loadedProject = createLoadedProject(
+      ['/test/project/contents/page2.md', '/test/project/contents/page1.md', '/test/project/contents/page3.md'],
+      {
+        pages: ['page1.md', 'page2.md'],
+      },
+    );
+    vi.mocked(runMarkdownItemProcessor).mockImplementation(({ filePath }) => {
+      if (filePath.endsWith('page1.md')) return okAsync(ItemPath('page1.xhtml'));
+      if (filePath.endsWith('page2.md')) return okAsync(ItemPath('page2.xhtml'));
       return okAsync(ItemPath('page3.xhtml'));
     });
     vi.mocked(runAutoEmptyTocItemProcessor).mockReturnValue(okAsync(ItemPath('toc.xhtml')));
 
     // Act
-    const result = await loadReflowContents(loadedProject, saveTo);
+    const [, items] = await rejecting(loadReflowContents(loadedProject, saveTo));
 
     // Assert
-    const [, items] = result._unsafeUnwrap();
     const pages = items.filter((i) => i.itemType === ProcessedItemType.PAGE);
 
     expect(pages).toHaveLength(2);
@@ -139,7 +174,7 @@ describe('ReflowContentsLoader', () => {
 
   test('目次ファイルはページ指定に含まれていなくても処理される', async () => {
     // Arrange
-    const loadedProject = createLoadedProject(['toc.md', 'page1.md'], {
+    const loadedProject = createLoadedProject(['/test/project/contents/toc.md', '/test/project/contents/page1.md'], {
       'toc-page-path': 'toc.md',
       pages: ['page1.md'],
     });
@@ -159,7 +194,15 @@ describe('ReflowContentsLoader', () => {
     );
 
     expect(runMarkdownTocItemProcessor).toHaveBeenCalledWith(
-      expect.stringContaining('toc.md'),
+      {
+        coverImage: false,
+        filePath: '/test/project/contents/toc.md',
+        fileType: 'text/markdown',
+        isHtml: false,
+        isMarkdown: true,
+        isXhtml: false,
+        toc: true,
+      },
       contentsDir,
       saveTo,
       undefined,
@@ -209,16 +252,32 @@ describe('ReflowContentsLoader', () => {
     // Assert
     expect(runMarkdownItemProcessor).not.toHaveBeenCalled();
     expect(runHtmlItemProcessor).toHaveBeenCalledWith(
-      expect.stringContaining('page.html'),
-      expect.anything(),
-      expect.anything(),
+      {
+        coverImage: false,
+        filePath: 'page.html',
+        fileType: 'text/html',
+        isHtml: true,
+        isMarkdown: false,
+        isXhtml: false,
+        toc: false,
+      },
+      '/test/project/contents',
+      '/test/output',
       undefined,
     );
     // Markdownはアセット扱いになるのでコピーされる
     expect(runFileCopyItemProcessor).toHaveBeenCalledWith(
-      expect.stringContaining('page.md'),
-      expect.anything(),
-      expect.anything(),
+      {
+        coverImage: false,
+        filePath: 'page.md',
+        fileType: 'text/markdown',
+        isHtml: false,
+        isMarkdown: true,
+        isXhtml: false,
+        toc: false,
+      },
+      '/test/project/contents',
+      '/test/output',
     );
   });
 });

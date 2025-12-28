@@ -1,9 +1,8 @@
-import mime from 'mime-types';
 import path from 'node:path';
 import { EpubCookerError } from '../../../error/EpubCookerError';
 import * as FileIo from '../../../lib/file-io/FileIo';
 import { parseMarkdown } from '../../../lib/markdown-parser/MarkdownParser';
-import { pipe, tryThrows, unwrap } from '../../../lib/util/EffectUtil';
+import { tryThrows } from '../../../lib/util/EffectUtil';
 import { changeFileExtension, removeExtension } from '../../../lib/util/FileExtensionUtil';
 import { convertToEpubXhtml } from '../../../lib/xhtml-converter/HtmlUtil';
 import { ItemPath } from '../../../value/ItemPath';
@@ -15,16 +14,19 @@ const supportedFileTypes = ['text/markdown'];
 /**
  * @internal
  */
-export const runMarkdownTocItemProcessor: ItemProcessor = (file, contentsDir, saveDir, projectCssPath) =>
+export const runMarkdownTocItemProcessor: ItemProcessor = (
+  { filePath, fileType },
+  contentsDir,
+  saveDir,
+  projectCssPath,
+) =>
   tryThrows<IllegalFileTypeError>()(() => {
-    const fileType = unwrap(pipe(mime.lookup(file)).map((m) => (m === false ? undefined : m)));
-
     if (fileType == null || !supportedFileTypes.includes(fileType)) {
       throw new IllegalFileTypeError(fileType, supportedFileTypes);
     }
   })
     .asyncAndThen(() =>
-      FileIo.getFile(file)
+      FileIo.getFile(filePath)
         .map((b) => b.toString())
         .map(parseMarkdown),
     )
@@ -33,11 +35,11 @@ export const runMarkdownTocItemProcessor: ItemProcessor = (file, contentsDir, sa
         ({
           ...parsed,
           htmlText: addNavElement(parsed.htmlText),
-          title: parsed.title ?? removeExtension(path.relative(contentsDir, file)),
+          title: parsed.title ?? removeExtension(path.relative(contentsDir, filePath)),
         }) as const,
     )
     .map(({ cssPath, htmlText, title }) => {
-      const itemPath = ItemPath.createFromRelative(contentsDir, changeFileExtension(file, 'xhtml'));
+      const itemPath = ItemPath.createFromRelative(contentsDir, changeFileExtension(filePath, 'xhtml'));
       const cssPaths: string[] = [];
 
       if (projectCssPath != null) {
