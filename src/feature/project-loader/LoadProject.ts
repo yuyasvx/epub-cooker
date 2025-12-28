@@ -1,6 +1,6 @@
 import yaml from 'yaml';
 import * as FileIo from '../../lib/file-io/FileIo';
-import { fails, rejects } from '../../lib/util/EffectUtil';
+import { rejects, tryThrows } from '../../lib/util/EffectUtil';
 import { EpubProjectV2 } from '../../value/EpubProject';
 import { type ResolvedPath, resolvePath } from '../../value/ResolvedPath';
 import { EpubCookerEventType } from '../event-emitter';
@@ -27,7 +27,7 @@ function loadProjectDefinition(projectDir: ResolvedPath) {
   return rejects<never>()
     .run(() => determineProjectFile(projectDir))
     .andThen((projectFilePath) =>
-      fails<ProjectNotFoundError>().run(() => {
+      tryThrows<ProjectNotFoundError>()(() => {
         if (projectFilePath == null) {
           throw new ProjectNotFoundError(projectDir);
         }

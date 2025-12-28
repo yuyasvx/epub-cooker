@@ -1,6 +1,6 @@
 import { Err, Ok } from 'neverthrow';
 import { describe, expect, test } from 'vitest';
-import { fails, pipeNonNull, rejecting, rejects, throwing } from './EffectUtil';
+import { fails, pipeNonNull, rejecting, rejects, throwing, tryRejects, tryThrows } from './EffectUtil';
 
 const throwableFn = (num: number) =>
   fails<Error>().run(() => {
@@ -29,9 +29,29 @@ describe('ResultUtil', () => {
     expect(throwable2 instanceof Err).toBe(true);
   });
 
-  test('rejectableはrejectしうるPromiseがresolve/rejectされた結果をResultにラップするものである', async () => {
+  test('tryThrowsはスローしうる関数を実行したり、実行中にスローされた結果をResultにラップするものである', () => {
+    const throwable_ = tryThrows<never>()(() => 123);
+    const throwable2 = tryThrows<Error>()(() => {
+      throw new Error('this is a test');
+    });
+
+    expect(throwable_ instanceof Ok).toBe(true);
+    expect(throwable2 instanceof Err).toBe(true);
+  });
+
+  test('rejectsはrejectしうるPromiseがresolve/rejectされた結果をResultにラップするものである', async () => {
     const throwable = await rejects<never>().run(async () => 123);
     const throwable2 = await rejects<Error>().run(async () => {
+      throw new Error('this is a test');
+    });
+
+    expect(throwable instanceof Ok).toBe(true);
+    expect(throwable2 instanceof Err).toBe(true);
+  });
+
+  test('tryRejectsはrejectしうるPromiseがresolve/rejectされた結果をResultにラップするものである', async () => {
+    const throwable = await tryRejects<never>()(async () => 123);
+    const throwable2 = await tryRejects<Error>()(async () => {
       throw new Error('this is a test');
     });
 

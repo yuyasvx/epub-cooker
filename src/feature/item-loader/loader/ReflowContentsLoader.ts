@@ -11,6 +11,7 @@ import { runAutoEmptyTocItemProcessor } from '../processor/AutoEmptyTocProcessor
 import { runFileCopyItemProcessor } from '../processor/FileCopyItemProcessor';
 import { runHtmlItemProcessor } from '../processor/HtmlItemProcessor';
 import { runMarkdownItemProcessor } from '../processor/MarkdownItemProcessor';
+import { runMarkdownTocItemProcessor } from '../processor/MarkdownTocItemProcessor';
 import type { ContentsLoader } from './ContentsLoader';
 import { ProcessedItemType } from './enums/ProcessedItemType';
 import { ItemLoaderItemContext } from './value/ItemLoaderItemContext';
@@ -73,7 +74,8 @@ function customizePageList(
     itemContextsByPath.set(ctx.filePath, ctx);
   }
 
-  return pagePaths
+  const tocItems = itemContexts.filter((ctx) => ctx.toc);
+  const filteredPages = pagePaths
     .map((p) => {
       const resolvedPath = resolvePath(contentsDir, p);
       const ctx = itemContextsByPath.get(resolvedPath);
@@ -83,6 +85,8 @@ function customizePageList(
       return ctx;
     })
     .filter((ctx): ctx is ItemLoaderItemContext => ctx != null);
+
+  return [...tocItems, ...filteredPages];
 }
 
 function isPageContent({ isHtml, isMarkdown, isXhtml }: ItemLoaderItemContext, using: SourceHandlingType) {
@@ -96,7 +100,7 @@ function isPageContent({ isHtml, isMarkdown, isXhtml }: ItemLoaderItemContext, u
 }
 
 function runItemProcessorAsPageContent(
-  { filePath, isHtml, isMarkdown, isXhtml }: ItemLoaderItemContext,
+  { filePath, isHtml, isMarkdown, isXhtml, toc }: ItemLoaderItemContext,
   contentsDir: ResolvedPath,
   saveTo: ResolvedPath,
   projectCssPath?: string,
@@ -104,8 +108,11 @@ function runItemProcessorAsPageContent(
   // TODO IF式を使いたいだけでこれはオーバーなやり方なきが。。
   const processor = throwing(
     pipe(null).map(() => {
-      if (isMarkdown) {
+      if (isMarkdown && !toc) {
         return runMarkdownItemProcessor;
+      }
+      if (isMarkdown && toc) {
+        return runMarkdownTocItemProcessor;
       }
       if (isHtml || isXhtml) {
         return runHtmlItemProcessor;

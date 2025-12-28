@@ -17,6 +17,9 @@ const runner = {
 };
 
 /** @internal */
+export const tryThrows = <E>() => runner.run as <T>(fn: () => T) => Result<T, E>;
+
+/** @internal */
 export const rejects = <E>() =>
   asyncRunner as {
     run<T>(fn: () => Promise<T>): ResultAsync<T, E>;
@@ -27,6 +30,9 @@ const asyncRunner = {
     return ResultAsync.fromThrowable(fn)();
   },
 };
+
+/** @internal */
+export const tryRejects = <E>() => asyncRunner.run as <T>(fn: () => T) => ResultAsync<T, E>;
 
 /** @internal */
 export const throwing = <T, E>(result: Result<T, E>): T => {

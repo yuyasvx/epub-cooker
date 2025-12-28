@@ -8,14 +8,14 @@ import { changeFileExtension, removeExtension } from '../../../lib/util/FileExte
 import { convertToEpubXhtml } from '../../../lib/xhtml-converter/HtmlUtil';
 import { ItemPath } from '../../../value/ItemPath';
 import { resolvePath } from '../../../value/ResolvedPath';
-import { IllegalFileTypeError, type ItemProcessor, resolveProjectCssPath } from './ItemProcessor';
+import { IllegalFileTypeError, type ItemProcessor } from './ItemProcessor';
 
 const supportedFileTypes = ['text/markdown'];
 
 /**
  * @internal
  */
-export const runMarkdownItemProcessor: ItemProcessor = (file, contentsDir, saveDir, projectCssPath) =>
+export const runMarkdownTocItemProcessor: ItemProcessor = (file, contentsDir, saveDir) =>
   tryThrows<IllegalFileTypeError>()(() => {
     const fileType = unwrap(pipe(mime.lookup(file)).map((m) => (m === false ? undefined : m)));
 
@@ -32,23 +32,15 @@ export const runMarkdownItemProcessor: ItemProcessor = (file, contentsDir, saveD
       (parsed) =>
         ({
           ...parsed,
+          htmlText: addNavElement(parsed.htmlText),
           title: parsed.title ?? removeExtension(path.relative(contentsDir, file)),
         }) as const,
     )
-    .map(({ cssPath, htmlText, title }) => {
+    .map(({ htmlText, title }) => {
       const itemPath = ItemPath.createFromRelative(contentsDir, changeFileExtension(file, 'xhtml'));
-      const cssPaths: string[] = [];
-
-      if (projectCssPath != null) {
-        cssPaths.push(resolveProjectCssPath(projectCssPath, itemPath));
-      }
-
-      if (cssPath != null) {
-        cssPaths.push(cssPath);
-      }
 
       return {
-        serializedXhtml: convertToEpubXhtml(htmlText, title, cssPaths),
+        serializedXhtml: convertToEpubXhtml(htmlText, title),
         itemPath,
       } as const;
     })
@@ -56,3 +48,7 @@ export const runMarkdownItemProcessor: ItemProcessor = (file, contentsDir, saveD
       FileIo.save(resolvePath(saveDir, itemPath), serializedXhtml).map(() => itemPath),
     )
     .mapErr((e) => new EpubCookerError('MarkdownItemProcessor', e));
+
+function addNavElement(htmlText: string) {
+  return `<nav epub:type="toc" id="toc">${htmlText}</nav>`;
+}
