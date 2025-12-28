@@ -3,7 +3,7 @@ import type { ProcessedItemType } from '../enums/ProcessedItemType';
 
 export type ProcessedItem = Readonly<{
   itemId: string;
-  mimeType?: string;
+  mimeType: string;
   itemType: ProcessedItemType;
   itemPath: string;
   fileSizeByte: number;

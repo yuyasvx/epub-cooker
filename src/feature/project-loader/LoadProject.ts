@@ -45,7 +45,7 @@ export function loadProject(projectDirPath: ResolvedPath) {
       loadContents(projectDirPath, proj).map((contents) => {
         const contentsDir = resolvePath(projectDirPath, proj.source.contents);
         return {
-          inputFiles: contents.map((c) => InputFileDetail(c, proj, resolvePath(projectDirPath, contentsDir))),
+          inputFiles: contents.map((c) => InputFileDetail(c, proj, contentsDir)),
           projectDefinition: proj,
           projectDir: projectDirPath,
           contentsDir,

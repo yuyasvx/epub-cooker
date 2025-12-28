@@ -4,7 +4,6 @@ import type { EpubProjectV2 } from './EpubProject';
 import { ItemPath } from './ItemPath';
 import type { ResolvedPath } from './ResolvedPath';
 
-/** @internal */
 export function InputFileDetail(filePath: ResolvedPath, project: EpubProjectV2, contentsDir: ResolvedPath) {
   const fileType = unwrap(pipe(mime.lookup(filePath)).map((m) => (m === false ? 'application/octet-stream' : m)));
 
@@ -25,11 +24,7 @@ export function InputFileDetail(filePath: ResolvedPath, project: EpubProjectV2, 
   };
 }
 
-type TInputFileDetail = ReturnType<typeof InputFileDetail>;
-
-/** @internal */
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface InputFileDetail extends TInputFileDetail {}
+export type InputFileDetail = ReturnType<typeof InputFileDetail>;
 
 function isCoverimage(filePath: ResolvedPath, coverImagePath: string | undefined, contentsDir: ResolvedPath) {
   const itemPath = ItemPath.createFromRelative(contentsDir, filePath);
