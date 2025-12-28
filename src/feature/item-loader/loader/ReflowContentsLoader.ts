@@ -1,6 +1,6 @@
 import { okAsync, ResultAsync } from 'neverthrow';
 import { SourceHandlingType } from '../../../enums/SourceHandlingType';
-import { pipe, throwing } from '../../../lib/util/EffectUtil';
+import { pipe, throwing, unwrap } from '../../../lib/util/EffectUtil';
 import type { EpubProjectV2 } from '../../../value/EpubProject';
 import type { ItemPath } from '../../../value/ItemPath';
 import { type ResolvedPath, resolvePath } from '../../../value/ResolvedPath';
@@ -11,6 +11,7 @@ import { runAutoEmptyTocItemProcessor } from '../processor/AutoEmptyTocProcessor
 import { runFileCopyItemProcessor } from '../processor/FileCopyItemProcessor';
 import { runHtmlItemProcessor } from '../processor/HtmlItemProcessor';
 import { runMarkdownItemProcessor } from '../processor/MarkdownItemProcessor';
+import { runMarkdownTocItemProcessor } from '../processor/MarkdownTocItemProcessor';
 import type { ContentsLoader } from './ContentsLoader';
 import { ProcessedItemType } from './enums/ProcessedItemType';
 import { ItemLoaderItemContext } from './value/ItemLoaderItemContext';
@@ -73,7 +74,8 @@ function customizePageList(
     itemContextsByPath.set(ctx.filePath, ctx);
   }
 
-  return pagePaths
+  const tocItems = itemContexts.filter((ctx) => ctx.toc);
+  const filteredPages = pagePaths
     .map((p) => {
       const resolvedPath = resolvePath(contentsDir, p);
       const ctx = itemContextsByPath.get(resolvedPath);
@@ -83,6 +85,13 @@ function customizePageList(
       return ctx;
     })
     .filter((ctx): ctx is ItemLoaderItemContext => ctx != null);
+
+  //念の為重複を消して返却
+  return unwrap(
+    pipe([...tocItems, ...filteredPages].map((itm) => itm.filePath))
+      .map((items) => [...new Set(items)])
+      .map((items) => items.map((itemPath) => itemContextsByPath.get(itemPath)!)),
+  );
 }
 
 function isPageContent({ isHtml, isMarkdown, isXhtml }: ItemLoaderItemContext, using: SourceHandlingType) {
@@ -96,7 +105,7 @@ function isPageContent({ isHtml, isMarkdown, isXhtml }: ItemLoaderItemContext, u
 }
 
 function runItemProcessorAsPageContent(
-  { filePath, isHtml, isMarkdown, isXhtml }: ItemLoaderItemContext,
+  { filePath, isHtml, isMarkdown, isXhtml, toc }: ItemLoaderItemContext,
   contentsDir: ResolvedPath,
   saveTo: ResolvedPath,
   projectCssPath?: string,
@@ -104,8 +113,11 @@ function runItemProcessorAsPageContent(
   // TODO IF式を使いたいだけでこれはオーバーなやり方なきが。。
   const processor = throwing(
     pipe(null).map(() => {
-      if (isMarkdown) {
+      if (isMarkdown && !toc) {
         return runMarkdownItemProcessor;
+      }
+      if (isMarkdown && toc) {
+        return runMarkdownTocItemProcessor;
       }
       if (isHtml || isXhtml) {
         return runHtmlItemProcessor;

@@ -5,7 +5,7 @@ import { PageSizeType } from '../enums/PageSizeType';
 import { SourceHandlingType } from '../enums/SourceHandlingType';
 import { IllegalSourceHandlingTypeError } from '../error/IllegalSourceHandlingTypeError';
 import { ValueGenerationError } from '../error/ValueGenerationError';
-import { fails } from '../lib/util/EffectUtil';
+import { tryThrows } from '../lib/util/EffectUtil';
 
 export const epubProjectV2Schema = z.object({
   version: z.literal(2),
@@ -78,14 +78,13 @@ type TEpubProjectV2 = Readonly<z.infer<typeof epubProjectV2Schema>>;
 export interface EpubProjectV2 extends TEpubProjectV2 {}
 
 export function EpubProjectV2(value: object) {
-  return fails()
-    .run(() => epubProjectV2Schema.parse(value))
+  return tryThrows()(() => epubProjectV2Schema.parse(value))
     .mapErr((e) => new ValueGenerationError('EpubProjectV2', e))
     .andThen(EpubProjectV2.validateSourceHandingType);
 }
 
 EpubProjectV2.validateSourceHandingType = function (project: EpubProjectV2) {
-  return fails<IllegalSourceHandlingTypeError>().run(() => {
+  return tryThrows<IllegalSourceHandlingTypeError>()(() => {
     if (project.source.using === SourceHandlingType.photo && project.book['layout-type'] === PageLayoutType.reflow) {
       throw new IllegalSourceHandlingTypeError(project.book['layout-type'], project.source.using);
     }

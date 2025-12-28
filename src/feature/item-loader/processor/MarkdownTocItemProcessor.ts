@@ -15,7 +15,7 @@ const supportedFileTypes = ['text/markdown'];
 /**
  * @internal
  */
-export const runMarkdownItemProcessor: ItemProcessor = (file, contentsDir, saveDir, projectCssPath) =>
+export const runMarkdownTocItemProcessor: ItemProcessor = (file, contentsDir, saveDir, projectCssPath) =>
   tryThrows<IllegalFileTypeError>()(() => {
     const fileType = unwrap(pipe(mime.lookup(file)).map((m) => (m === false ? undefined : m)));
 
@@ -32,6 +32,7 @@ export const runMarkdownItemProcessor: ItemProcessor = (file, contentsDir, saveD
       (parsed) =>
         ({
           ...parsed,
+          htmlText: addNavElement(parsed.htmlText),
           title: parsed.title ?? removeExtension(path.relative(contentsDir, file)),
         }) as const,
     )
@@ -48,11 +49,15 @@ export const runMarkdownItemProcessor: ItemProcessor = (file, contentsDir, saveD
       }
 
       return {
-        serializedXhtml: convertToEpubXhtml(htmlText, title, cssPaths),
+        serializedXhtml: convertToEpubXhtml(htmlText, title),
         itemPath,
       } as const;
     })
     .andThen(({ itemPath, serializedXhtml }) =>
       FileIo.save(resolvePath(saveDir, itemPath), serializedXhtml).map(() => itemPath),
     )
-    .mapErr((e) => new EpubCookerError('MarkdownItemProcessor', e));
+    .mapErr((e) => new EpubCookerError('MarkdownTocItemProcessor', e));
+
+function addNavElement(htmlText: string) {
+  return `<nav epub:type="toc" id="toc">${htmlText}</nav>`;
+}
