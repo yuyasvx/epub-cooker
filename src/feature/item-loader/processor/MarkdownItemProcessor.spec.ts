@@ -1,9 +1,13 @@
 import { err, ok } from 'neverthrow';
 import { beforeEach, describe, expect, type Mock, test, vi } from 'vitest';
 import { NodeErrorType } from '../../../enums/NodeJsErrorType';
+import { PageLayoutType } from '../../../enums/PageLayoutType';
+import { PageProgressionDirectionType } from '../../../enums/PageProgressionDirectionType';
 import { EpubCookerError } from '../../../error/EpubCookerError';
 import { FileIoError } from '../../../lib/file-io/error/FileIoError';
 import * as FileIo from '../../../lib/file-io/FileIo';
+import type { EpubProjectV2 } from '../../../value/EpubProject';
+import { InputFileDetail } from '../../../value/InputFileDetail';
 import type { ResolvedPath } from '../../../value/ResolvedPath';
 import { IllegalFileTypeError } from './ItemProcessor';
 import { runMarkdownItemProcessor } from './MarkdownItemProcessor';
@@ -28,7 +32,7 @@ describe('MarkdownItemProcessor', () => {
     (FileIo.getFile as Mock).mockReturnValue(ok(mockContent));
     (FileIo.save as Mock).mockReturnValue(ok(undefined));
 
-    const result = await runMarkdownItemProcessor(sourcePath, projectDir, saveDir);
+    const result = await runMarkdownItemProcessor(InputFileDetail(sourcePath, project(), saveDir), projectDir, saveDir);
 
     expect(result.isOk()).toBe(true);
     expect(result._unsafeUnwrap()).toBe('docs/page.xhtml');
@@ -40,7 +44,11 @@ describe('MarkdownItemProcessor', () => {
   test('Markdownファイルと認識できない場合はエラー', async () => {
     const invalidFile = '/abs/path/to/image.png' as ResolvedPath;
 
-    const result = await runMarkdownItemProcessor(invalidFile, projectDir, saveDir);
+    const result = await runMarkdownItemProcessor(
+      InputFileDetail(invalidFile, project(), saveDir),
+      projectDir,
+      saveDir,
+    );
 
     const error = result._unsafeUnwrapErr();
     expect(error).toBeInstanceOf(EpubCookerError);
@@ -51,7 +59,7 @@ describe('MarkdownItemProcessor', () => {
     const error = FileIoError.from(sourcePath, NodeErrorType.NO_SUCH_FILE_OR_DIRECTORY, new Error('Read error'));
     (FileIo.getFile as Mock).mockReturnValue(err(error));
 
-    const result = await runMarkdownItemProcessor(sourcePath, projectDir, saveDir);
+    const result = await runMarkdownItemProcessor(InputFileDetail(sourcePath, project(), saveDir), projectDir, saveDir);
 
     expect(result.isErr()).toBe(true);
     expect(result._unsafeUnwrapErr()).toBeInstanceOf(EpubCookerError);
@@ -63,9 +71,31 @@ describe('MarkdownItemProcessor', () => {
     const error = FileIoError.from('Save error', NodeErrorType.PERMISSION_DENIED, new Error('Write error'));
     (FileIo.save as Mock).mockReturnValue(err(error));
 
-    const result = await runMarkdownItemProcessor(sourcePath, projectDir, saveDir);
+    const result = await runMarkdownItemProcessor(InputFileDetail(sourcePath, project(), saveDir), projectDir, saveDir);
 
     expect(result.isErr()).toBe(true);
     expect(result._unsafeUnwrapErr()).toBeInstanceOf(EpubCookerError);
   });
 });
+
+function project() {
+  return {
+    book: {
+      'layout-type': PageLayoutType.reflow,
+      'page-progression-direction': PageProgressionDirectionType.ltr,
+      'use-specified-fonts': false,
+    },
+    metadata: {
+      title: 'book',
+      language: '',
+    },
+    source: {
+      'ignore-patterns': [],
+      'ignore-system-file': true,
+      'ignore-unknown-file-type': false,
+      contents: 'contents',
+      using: 'markdown',
+    },
+    version: 2,
+  } satisfies EpubProjectV2;
+}

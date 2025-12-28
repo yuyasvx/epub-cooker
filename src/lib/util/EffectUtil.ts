@@ -32,7 +32,7 @@ const asyncRunner = {
 };
 
 /** @internal */
-export const tryRejects = <E>() => asyncRunner.run as <T>(fn: () => T) => ResultAsync<T, E>;
+export const tryRejects = <E>() => asyncRunner.run as <T>(fn: () => Promise<T>) => ResultAsync<T, E>;
 
 /** @internal */
 export const throwing = <T, E>(result: Result<T, E>): T => {

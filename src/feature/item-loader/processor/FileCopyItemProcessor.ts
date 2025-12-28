@@ -11,8 +11,8 @@ import type { ItemProcessor } from './ItemProcessor';
  * @returns
  */
 export const runFileCopyItemProcessor: ItemProcessor = (file, contentsDir, saveDir) => {
-  const itemPath = ItemPath.createFromRelative(contentsDir, file);
-  return FileIo.copyOne(file, ItemPath.getDestination(itemPath, saveDir))
+  const itemPath = ItemPath.createFromRelative(contentsDir, file.filePath);
+  return FileIo.copyOne(file.filePath, ItemPath.getDestination(itemPath, saveDir))
     .map(() => itemPath)
     .mapErr((e) => new EpubCookerError('FileCopyItemProcessorError', e));
 };

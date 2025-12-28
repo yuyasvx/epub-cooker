@@ -25,9 +25,9 @@ export function cook(projectDir: ResolvedPath, noPack = false) {
 
   return prepareCook(workingDir)
     .andThen(() => loadProject(projectDir))
-    .andThen(({ contentsDir, loadedFiles, projectDefinition }) =>
+    .andThen(({ contentsDir, inputFiles, projectDefinition }) =>
       decideIdentifier(projectDefinition, projectDir).map(
-        (p) => ({ projectDefinition: p, loadedFiles, projectDir, contentsDir }) satisfies LoadedProject,
+        (p) => ({ projectDefinition: p, inputFiles, projectDir, contentsDir }) satisfies LoadedProject,
       ),
     )
     .andThen((loaded) => loadContentsItem(loaded, resolvePath(workingDir, 'OPS')))
@@ -48,9 +48,9 @@ function finalize(workingDir: ResolvedPath, keepWorkingContents = false) {
 }
 
 function prepareEvents() {
-  epubCookerEvent.on(EpubCookerEventType.PROJECT_LOADED, ({ loadedFiles, projectDefinition }) => {
+  epubCookerEvent.on(EpubCookerEventType.PROJECT_LOADED, ({ inputFiles, projectDefinition }) => {
     printDoneMessage('プロジェクトを読み込みました');
-    printProjectOverviewTable(projectDefinition, loadedFiles);
+    printProjectOverviewTable(projectDefinition, inputFiles);
   });
 
   epubCookerEvent.on(EpubCookerEventType.NO_TOC, () => {

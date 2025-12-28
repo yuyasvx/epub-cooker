@@ -2,6 +2,7 @@ import { okAsync, ResultAsync } from 'neverthrow';
 import { SourceHandlingType } from '../../../enums/SourceHandlingType';
 import { pipe, throwing, unwrap } from '../../../lib/util/EffectUtil';
 import type { EpubProjectV2 } from '../../../value/EpubProject';
+import type { InputFileDetail } from '../../../value/InputFileDetail';
 import type { ItemPath } from '../../../value/ItemPath';
 import { type ResolvedPath, resolvePath } from '../../../value/ResolvedPath';
 import { EpubCookerEventType } from '../../event-emitter';
@@ -14,40 +15,31 @@ import { runMarkdownItemProcessor } from '../processor/MarkdownItemProcessor';
 import { runMarkdownTocItemProcessor } from '../processor/MarkdownTocItemProcessor';
 import type { ContentsLoader } from './ContentsLoader';
 import { ProcessedItemType } from './enums/ProcessedItemType';
-import { ItemLoaderItemContext } from './value/ItemLoaderItemContext';
 import { ProcessedItem } from './value/ProcessedItem';
 
 /** @internal */
 export const loadReflowContents: ContentsLoader = function (loadedProject: LoadedProject, saveTo: ResolvedPath) {
-  const { contentsDir, loadedFiles, projectDefinition } = loadedProject;
-  const itemContexts = loadedFiles.map((item) => ItemLoaderItemContext(item, projectDefinition, contentsDir));
-
-  const pageItemContexts = filterPageItemContexts(itemContexts, projectDefinition, contentsDir);
-  const assetItemContexts = itemContexts.filter((ctx) => !isPageContent(ctx, projectDefinition.source.using));
+  const { contentsDir, inputFiles, projectDefinition } = loadedProject;
+  const inputsAsPageContent = filterPageItemContexts(inputFiles, projectDefinition, contentsDir);
+  const inputsAsAsset = inputFiles.filter((input) => !isPageContent(input, projectDefinition.source.using));
 
   return ResultAsync.combine([
-    ...pageItemContexts.map((ctx) =>
-      runItemProcessorAsPageContent(ctx, contentsDir, saveTo, projectDefinition.source['css-path']).map(
+    ...inputsAsPageContent.map((input) =>
+      runItemProcessorAsPageContent(input, contentsDir, saveTo, projectDefinition.source['css-path']).map(
         // TODO projectDefinition.source['css-path']を直接当てている これは安全ではないので辞めたい
-        (itemPath) => createPageProcessedItem(itemPath, ctx),
+        (itemPath) => createPageProcessedItem(itemPath, input),
       ),
     ),
-    ...assetItemContexts.map((ctx) =>
-      runFileCopyItemProcessor(ctx.filePath, contentsDir, saveTo).map((itemPath) =>
-        createAssetProcessedItem(itemPath, ctx),
-      ),
+    ...inputsAsAsset.map((input) =>
+      runFileCopyItemProcessor(input, contentsDir, saveTo).map((itemPath) => createAssetProcessedItem(itemPath, input)),
     ),
   ])
     .andThen((items) => validateToc(items, saveTo))
     .map((items) => [loadedProject, items] as const);
 };
 
-function filterPageItemContexts(
-  itemContexts: ItemLoaderItemContext[],
-  project: EpubProjectV2,
-  contentsDir: ResolvedPath,
-) {
-  const allPageItemContexts = itemContexts.filter((ctx) => isPageContent(ctx, project.source.using));
+function filterPageItemContexts(itemContexts: InputFileDetail[], project: EpubProjectV2, contentsDir: ResolvedPath) {
+  const allPageItemContexts = itemContexts.filter((i) => isPageContent(i, project.source.using));
   return customizePageList(allPageItemContexts, project.source.pages, contentsDir);
 }
 
@@ -56,45 +48,45 @@ function filterPageItemContexts(
  *
  * ページの並び順も指定されたページファイルに合わせます
  *
- * @param itemContexts 読み込み予定のアイテム情報
+ * @param inputFileDetails 読み込み予定のアイテム情報
  * @param pagePaths
  * @param contentsDir
  * @returns
  */
 function customizePageList(
-  itemContexts: ItemLoaderItemContext[],
+  inputFileDetails: InputFileDetail[],
   pagePaths: string[] | undefined,
   contentsDir: ResolvedPath,
-): ItemLoaderItemContext[] {
+): InputFileDetail[] {
   if (pagePaths == null) {
-    return itemContexts;
+    return inputFileDetails;
   }
-  const itemContextsByPath = new Map<ResolvedPath, ItemLoaderItemContext>();
-  for (const ctx of itemContexts) {
-    itemContextsByPath.set(ctx.filePath, ctx);
+  const itemMap = new Map<ResolvedPath, InputFileDetail>();
+  for (const item of inputFileDetails) {
+    itemMap.set(item.filePath, item);
   }
 
-  const tocItems = itemContexts.filter((ctx) => ctx.toc);
+  const tocItems = inputFileDetails.filter((i) => i.toc);
   const filteredPages = pagePaths
     .map((p) => {
       const resolvedPath = resolvePath(contentsDir, p);
-      const ctx = itemContextsByPath.get(resolvedPath);
-      if (ctx == null) {
+      const i = itemMap.get(resolvedPath);
+      if (i == null) {
         _getEventEmitter().emit(EpubCookerEventType.PAGE_NOT_FOUND, p);
       }
-      return ctx;
+      return i;
     })
-    .filter((ctx): ctx is ItemLoaderItemContext => ctx != null);
+    .filter((i): i is InputFileDetail => i != null);
 
   //念の為重複を消して返却
   return unwrap(
     pipe([...tocItems, ...filteredPages].map((itm) => itm.filePath))
       .map((items) => [...new Set(items)])
-      .map((items) => items.map((itemPath) => itemContextsByPath.get(itemPath)!)),
+      .map((items) => items.map((itemPath) => itemMap.get(itemPath)!)),
   );
 }
 
-function isPageContent({ isHtml, isMarkdown, isXhtml }: ItemLoaderItemContext, using: SourceHandlingType) {
+function isPageContent({ isHtml, isMarkdown, isXhtml }: InputFileDetail, using: SourceHandlingType) {
   if (using === SourceHandlingType.markdown) {
     return isMarkdown || isHtml || isXhtml;
   }
@@ -105,11 +97,12 @@ function isPageContent({ isHtml, isMarkdown, isXhtml }: ItemLoaderItemContext, u
 }
 
 function runItemProcessorAsPageContent(
-  { filePath, isHtml, isMarkdown, isXhtml, toc }: ItemLoaderItemContext,
+  input: InputFileDetail,
   contentsDir: ResolvedPath,
   saveTo: ResolvedPath,
   projectCssPath?: string,
 ) {
+  const { isHtml, isMarkdown, isXhtml, toc } = input;
   // TODO IF式を使いたいだけでこれはオーバーなやり方なきが。。
   const processor = throwing(
     pipe(null).map(() => {
@@ -126,23 +119,23 @@ function runItemProcessorAsPageContent(
     }),
   );
 
-  return processor(filePath, contentsDir, saveTo, projectCssPath);
+  return processor(input, contentsDir, saveTo, projectCssPath);
 }
 
-function createPageProcessedItem(itemPath: ItemPath, itemContext: ItemLoaderItemContext) {
+function createPageProcessedItem(itemPath: ItemPath, itemContext: InputFileDetail) {
   // TODO ファイルサイズ取得はできていない　loadedFilesの改良が終わったらやる
   if (itemContext.toc) {
-    return ProcessedItem(ProcessedItemType.TOC_PAGE, itemPath, 0);
+    return ProcessedItem(ProcessedItemType.TOC_PAGE, itemPath, 0, itemContext.fileType);
   }
-  return ProcessedItem(ProcessedItemType.PAGE, itemPath, 0);
+  return ProcessedItem(ProcessedItemType.PAGE, itemPath, 0, itemContext.fileType);
 }
 
-function createAssetProcessedItem(itemPath: ItemPath, itemContext: ItemLoaderItemContext) {
+function createAssetProcessedItem(itemPath: ItemPath, itemContext: InputFileDetail) {
   // TODO ファイルサイズ取得はできていない　loadedFilesの改良が終わったらやる
   if (itemContext.coverImage) {
-    return ProcessedItem(ProcessedItemType.COVER_IMAGE, itemPath, 0);
+    return ProcessedItem(ProcessedItemType.COVER_IMAGE, itemPath, 0, itemContext.fileType);
   }
-  return ProcessedItem(ProcessedItemType.ASSET, itemPath, 0);
+  return ProcessedItem(ProcessedItemType.ASSET, itemPath, 0, itemContext.fileType);
 }
 
 function validateToc(items: ProcessedItem[], saveTo: ResolvedPath) {
@@ -151,7 +144,7 @@ function validateToc(items: ProcessedItem[], saveTo: ResolvedPath) {
 
     return runAutoEmptyTocItemProcessor(saveTo).map((itemPath) => [
       ...items,
-      ProcessedItem(ProcessedItemType.TOC_PAGE, itemPath, 0),
+      ProcessedItem(ProcessedItemType.TOC_PAGE, itemPath, 0, 'application/xhtml+xml'),
     ]);
   }
   return okAsync(items);
