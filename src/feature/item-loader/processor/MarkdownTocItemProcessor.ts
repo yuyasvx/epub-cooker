@@ -8,14 +8,14 @@ import { changeFileExtension, removeExtension } from '../../../lib/util/FileExte
 import { convertToEpubXhtml } from '../../../lib/xhtml-converter/HtmlUtil';
 import { ItemPath } from '../../../value/ItemPath';
 import { resolvePath } from '../../../value/ResolvedPath';
-import { IllegalFileTypeError, type ItemProcessor } from './ItemProcessor';
+import { IllegalFileTypeError, type ItemProcessor, resolveProjectCssPath } from './ItemProcessor';
 
 const supportedFileTypes = ['text/markdown'];
 
 /**
  * @internal
  */
-export const runMarkdownTocItemProcessor: ItemProcessor = (file, contentsDir, saveDir) =>
+export const runMarkdownTocItemProcessor: ItemProcessor = (file, contentsDir, saveDir, projectCssPath) =>
   tryThrows<IllegalFileTypeError>()(() => {
     const fileType = unwrap(pipe(mime.lookup(file)).map((m) => (m === false ? undefined : m)));
 
@@ -36,8 +36,17 @@ export const runMarkdownTocItemProcessor: ItemProcessor = (file, contentsDir, sa
           title: parsed.title ?? removeExtension(path.relative(contentsDir, file)),
         }) as const,
     )
-    .map(({ htmlText, title }) => {
+    .map(({ cssPath, htmlText, title }) => {
       const itemPath = ItemPath.createFromRelative(contentsDir, changeFileExtension(file, 'xhtml'));
+      const cssPaths: string[] = [];
+
+      if (projectCssPath != null) {
+        cssPaths.push(resolveProjectCssPath(projectCssPath, itemPath));
+      }
+
+      if (cssPath != null) {
+        cssPaths.push(cssPath);
+      }
 
       return {
         serializedXhtml: convertToEpubXhtml(htmlText, title),
@@ -47,7 +56,7 @@ export const runMarkdownTocItemProcessor: ItemProcessor = (file, contentsDir, sa
     .andThen(({ itemPath, serializedXhtml }) =>
       FileIo.save(resolvePath(saveDir, itemPath), serializedXhtml).map(() => itemPath),
     )
-    .mapErr((e) => new EpubCookerError('MarkdownItemProcessor', e));
+    .mapErr((e) => new EpubCookerError('MarkdownTocItemProcessor', e));
 
 function addNavElement(htmlText: string) {
   return `<nav epub:type="toc" id="toc">${htmlText}</nav>`;

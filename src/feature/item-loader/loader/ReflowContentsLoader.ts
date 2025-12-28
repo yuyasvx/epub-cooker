@@ -1,6 +1,6 @@
 import { okAsync, ResultAsync } from 'neverthrow';
 import { SourceHandlingType } from '../../../enums/SourceHandlingType';
-import { pipe, throwing } from '../../../lib/util/EffectUtil';
+import { pipe, throwing, unwrap } from '../../../lib/util/EffectUtil';
 import type { EpubProjectV2 } from '../../../value/EpubProject';
 import type { ItemPath } from '../../../value/ItemPath';
 import { type ResolvedPath, resolvePath } from '../../../value/ResolvedPath';
@@ -86,7 +86,12 @@ function customizePageList(
     })
     .filter((ctx): ctx is ItemLoaderItemContext => ctx != null);
 
-  return [...tocItems, ...filteredPages];
+  //念の為重複を消して返却
+  return unwrap(
+    pipe([...tocItems, ...filteredPages].map((itm) => itm.filePath))
+      .map((items) => [...new Set(items)])
+      .map((items) => items.map((itemPath) => itemContextsByPath.get(itemPath)!)),
+  );
 }
 
 function isPageContent({ isHtml, isMarkdown, isXhtml }: ItemLoaderItemContext, using: SourceHandlingType) {
