@@ -1,13 +1,15 @@
 import chalk from 'chalk';
 import columnify from 'columnify';
+import type { SourceHandlingType } from '../../enums/SourceHandlingType';
 import type { EpubProjectV2 } from '../../value/EpubProject';
+import { type InputFileDetail, isPageContent } from '../../value/InputFileDetail';
 
 /**
  * @internal
  */
-export function printProjectOverviewTable(project: EpubProjectV2, loadedFiles: unknown[], blankLine = true) {
+export function printProjectOverviewTable(project: EpubProjectV2, loadedFiles: InputFileDetail[], blankLine = true) {
   console.log(
-    `${blankLine ? '\n' : ''}${content(project)}\n\n${fileCounts(loadedFiles)}${pageList(project.source.pages)}`,
+    `${blankLine ? '\n' : ''}${content(project)}\n\n${fileCounts(loadedFiles, project.source.using)}${pageList(project.source.pages)}`,
   );
 }
 
@@ -19,6 +21,7 @@ function content(project: EpubProjectV2) {
       ...(project.metadata.publisher ? { [propertyKey('出版社')]: project.metadata.publisher } : {}),
       ...(project.metadata['published-date'] ? { [propertyKey('発売日')]: project.metadata['published-date'] } : {}),
       [propertyKey('言語')]: project.metadata.language,
+      ...(project.metadata.description ? { [propertyKey('説明')]: project.metadata.description } : {}),
     },
     {
       showHeaders: false,
@@ -27,8 +30,10 @@ function content(project: EpubProjectV2) {
   );
 }
 
-function fileCounts(loadedFiles: unknown[]) {
-  return `${bullet()}処理対象のファイル数: ${loadedFiles.length}`;
+function fileCounts(loadedFiles: InputFileDetail[], using: SourceHandlingType) {
+  return `${bullet()}処理対象のファイル: 合計 ${loadedFiles.length}
+  ${chalk.gray(`- ページファイル: ${loadedFiles.filter((f) => isPageContent(f, using)).length}`)}
+  ${chalk.gray(`- 画像・CSSなど: ${loadedFiles.filter((f) => !isPageContent(f, using)).length}`)}`;
 }
 
 function propertyKey(keyName: string) {

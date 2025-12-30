@@ -14,7 +14,12 @@ const supportedFileTypes = ['text/markdown'];
 /**
  * @internal
  */
-export const runMarkdownItemProcessor: ItemProcessor = ({ filePath, fileType }, contentsDir, saveDir, projectCssPath) =>
+export const runMarkdownItemProcessor: ItemProcessor = (
+  { filePath, fileType },
+  { contentsDir },
+  saveDir,
+  projectCssPath,
+) =>
   tryThrows<IllegalFileTypeError>()(() => {
     if (fileType == null || !supportedFileTypes.includes(fileType)) {
       throw new IllegalFileTypeError(fileType, supportedFileTypes);

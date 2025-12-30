@@ -109,14 +109,14 @@ describe('ReflowContentsLoader', () => {
     expect(runMarkdownItemProcessor).toHaveBeenCalledWith(
       {
         coverImage: false,
-        filePath: 'page1.md',
+        filePath: 'page1.md' as ResolvedPath,
         fileType: 'text/markdown',
         isHtml: false,
         isMarkdown: true,
         isXhtml: false,
         toc: false,
-      },
-      contentsDir,
+      } satisfies InputFileDetail,
+      loadedProject,
       saveTo,
       undefined,
     );
@@ -130,7 +130,7 @@ describe('ReflowContentsLoader', () => {
         isXhtml: false,
         toc: false,
       },
-      contentsDir,
+      loadedProject,
       saveTo,
     );
     // 目次がないので自動生成が呼ばれる
@@ -203,7 +203,7 @@ describe('ReflowContentsLoader', () => {
         isXhtml: false,
         toc: true,
       },
-      contentsDir,
+      loadedProject,
       saveTo,
       undefined,
     );
@@ -261,8 +261,8 @@ describe('ReflowContentsLoader', () => {
         isXhtml: false,
         toc: false,
       },
-      '/test/project/contents',
-      '/test/output',
+      loadedProject,
+      saveTo,
       undefined,
     );
     // Markdownはアセット扱いになるのでコピーされる
@@ -276,8 +276,8 @@ describe('ReflowContentsLoader', () => {
         isXhtml: false,
         toc: false,
       },
-      '/test/project/contents',
-      '/test/output',
+      loadedProject,
+      saveTo,
     );
   });
 });

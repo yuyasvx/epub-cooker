@@ -9,6 +9,7 @@ import * as FileIo from '../../../lib/file-io/FileIo';
 import type { EpubProjectV2 } from '../../../value/EpubProject';
 import { InputFileDetail } from '../../../value/InputFileDetail';
 import type { ResolvedPath } from '../../../value/ResolvedPath';
+import type { LoadedProject } from '../../project-loader';
 import { IllegalFileTypeError } from './ItemProcessor';
 import { runMarkdownItemProcessor } from './MarkdownItemProcessor';
 
@@ -16,9 +17,16 @@ import { runMarkdownItemProcessor } from './MarkdownItemProcessor';
 vi.mock('../../../lib/file-io/FileIo');
 
 describe('MarkdownItemProcessor', () => {
-  const sourcePath = '/abs/path/to/project/docs/page.md' as ResolvedPath;
+  const sourcePath = '/abs/path/to/project/contents/docs/page.md' as ResolvedPath;
   const projectDir = '/abs/path/to/project' as ResolvedPath;
   const saveDir = '/abs/path/to/project/.working' as ResolvedPath;
+
+  const loadedProject = {
+    projectDir,
+    inputFiles: [],
+    projectDefinition: project(),
+    contentsDir: '/abs/path/to/project/contents' as ResolvedPath,
+  } satisfies LoadedProject;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -32,7 +40,11 @@ describe('MarkdownItemProcessor', () => {
     (FileIo.getFile as Mock).mockReturnValue(ok(mockContent));
     (FileIo.save as Mock).mockReturnValue(ok(undefined));
 
-    const result = await runMarkdownItemProcessor(InputFileDetail(sourcePath, project(), saveDir), projectDir, saveDir);
+    const result = await runMarkdownItemProcessor(
+      InputFileDetail(sourcePath, project(), saveDir),
+      loadedProject,
+      saveDir,
+    );
 
     expect(result.isOk()).toBe(true);
     expect(result._unsafeUnwrap()).toBe('docs/page.xhtml');
@@ -46,7 +58,7 @@ describe('MarkdownItemProcessor', () => {
 
     const result = await runMarkdownItemProcessor(
       InputFileDetail(invalidFile, project(), saveDir),
-      projectDir,
+      loadedProject,
       saveDir,
     );
 
@@ -59,7 +71,11 @@ describe('MarkdownItemProcessor', () => {
     const error = FileIoError.from(sourcePath, NodeErrorType.NO_SUCH_FILE_OR_DIRECTORY, new Error('Read error'));
     (FileIo.getFile as Mock).mockReturnValue(err(error));
 
-    const result = await runMarkdownItemProcessor(InputFileDetail(sourcePath, project(), saveDir), projectDir, saveDir);
+    const result = await runMarkdownItemProcessor(
+      InputFileDetail(sourcePath, project(), saveDir),
+      loadedProject,
+      saveDir,
+    );
 
     expect(result.isErr()).toBe(true);
     expect(result._unsafeUnwrapErr()).toBeInstanceOf(EpubCookerError);
@@ -71,7 +87,11 @@ describe('MarkdownItemProcessor', () => {
     const error = FileIoError.from('Save error', NodeErrorType.PERMISSION_DENIED, new Error('Write error'));
     (FileIo.save as Mock).mockReturnValue(err(error));
 
-    const result = await runMarkdownItemProcessor(InputFileDetail(sourcePath, project(), saveDir), projectDir, saveDir);
+    const result = await runMarkdownItemProcessor(
+      InputFileDetail(sourcePath, project(), saveDir),
+      loadedProject,
+      saveDir,
+    );
 
     expect(result.isErr()).toBe(true);
     expect(result._unsafeUnwrapErr()).toBeInstanceOf(EpubCookerError);
