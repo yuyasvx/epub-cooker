@@ -13,4 +13,5 @@ export type EpubCookerEventPayload = {
   [EpubCookerEventCode.BEGIN_ITEM_LOADER]: LoadedProject;
   [EpubCookerEventCode.END_ITEM_LOADER]: void;
   [EpubCookerEventCode.ITEM_LOADER_NEXT_ITEM]: InputFileDetail;
+  [EpubCookerEventCode.ITEM_LOADED]: void;
 };

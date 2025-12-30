@@ -31,9 +31,11 @@ export const loadReflowContents: ContentsLoader = function (loadedProject: Loade
     ),
     ...inputsAsAsset.map((input) => {
       _getEventEmitter().emit(EpubCookerEventType.ITEM_LOADER_NEXT_ITEM, input);
-      return runFileCopyItemProcessor(input, loadedProject, saveTo).map((itemPath) =>
-        createAssetProcessedItem(itemPath, input),
-      );
+      return runFileCopyItemProcessor(input, loadedProject, saveTo)
+        .map((itemPath) => createAssetProcessedItem(itemPath, input))
+        .andTee(() => {
+          _getEventEmitter().emit(EpubCookerEventType.ITEM_LOADED);
+        });
     }),
   ])
     .andThen((items) => validateToc(items, saveTo))
@@ -112,7 +114,9 @@ function runItemProcessorAsPageContent(
     }),
   );
 
-  return processor(input, loadedProject, saveTo, projectCssPath);
+  return processor(input, loadedProject, saveTo, projectCssPath).andTee(() => {
+    _getEventEmitter().emit(EpubCookerEventType.ITEM_LOADED);
+  });
 }
 
 function createPageProcessedItem(itemPath: ItemPath, itemContext: InputFileDetail) {

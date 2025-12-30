@@ -18,7 +18,7 @@ const context = {
 };
 
 /** @internal */
-export function reset(totalFiles: unknown[], startValue = 0) {
+export function reset(totalFiles: InputFileDetail[], startValue = 0) {
   context.value = startValue;
   context.max = totalFiles.length;
   const currentValue = context.value < 0 ? 0 : context.value;
@@ -28,9 +28,11 @@ export function reset(totalFiles: unknown[], startValue = 0) {
 }
 
 /** @internal */
-export function update(delta = 0, nextFile: InputFileDetail) {
+export function update(delta = 0, nextFile?: InputFileDetail) {
   context.value += delta;
-  context.filePath = nextFile.filePath;
+  if (nextFile != null) {
+    context.filePath = nextFile.filePath;
+  }
   const currentValue = context.value < 0 ? 0 : context.value;
 
   bar.update(currentValue, {

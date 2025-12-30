@@ -62,11 +62,20 @@ function prepareEvents() {
   });
 
   epubCookerEvent.on(EpubCookerEventType.BEGIN_ITEM_LOADER, ({ inputFiles }) => {
-    LoaderProgressBar.reset(inputFiles, -1);
+    LoaderProgressBar.reset(inputFiles);
   });
 
   epubCookerEvent.on(EpubCookerEventType.ITEM_LOADER_NEXT_ITEM, (input) => {
-    LoaderProgressBar.update(1, input);
+    LoaderProgressBar.update(0, input);
+  });
+
+  epubCookerEvent.on(EpubCookerEventType.ITEM_LOADED, () => {
+    LoaderProgressBar.update(1);
+  });
+
+  epubCookerEvent.on(EpubCookerEventType.END_ITEM_LOADER, () => {
+    LoaderProgressBar.stop();
+    printDoneMessage('読み込み完了');
   });
 
   epubCookerEvent.on(EpubCookerEventType.NO_TOC, () => {
@@ -76,14 +85,12 @@ function prepareEvents() {
   });
 
   epubCookerEvent.on(EpubCookerEventType.FINISHED, ([, destination]) => {
-    LoaderProgressBar.stop();
     printDoneMessage('製本完了');
     console.log(chalk.hex('#00cde0')(`🎉 EPUBの生成が完了しました！`));
     console.log(chalk.gray(destination));
   });
 
   epubCookerEvent.on(EpubCookerEventType.FINISHED_WITHOUT_ARCHIVE, (destination) => {
-    LoaderProgressBar.stop();
     printDoneMessage('処理終了');
     console.log('EPUBファイルのコンテンツの変換結果を下記に出力しました');
     console.log(chalk.gray(destination));

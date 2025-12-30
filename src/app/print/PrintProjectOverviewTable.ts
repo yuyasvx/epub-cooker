@@ -31,9 +31,21 @@ function content(project: EpubProjectV2) {
 }
 
 function fileCounts(loadedFiles: InputFileDetail[], using: SourceHandlingType) {
+  const counts = loadedFiles.reduce(
+    (acc, f) => {
+      if (isPageContent(f, using)) {
+        acc.pageFiles++;
+      } else {
+        acc.otherFiles++;
+      }
+      return acc;
+    },
+    { pageFiles: 0, otherFiles: 0 },
+  );
+
   return `${bullet()}処理対象のファイル: 合計 ${loadedFiles.length}
-  ${chalk.gray(`- ページファイル: ${loadedFiles.filter((f) => isPageContent(f, using)).length}`)}
-  ${chalk.gray(`- 画像・CSSなど: ${loadedFiles.filter((f) => !isPageContent(f, using)).length}`)}`;
+  ${chalk.gray(`- ページファイル: ${counts.pageFiles}`)}
+  ${chalk.gray(`- 画像・CSSなど: ${counts.otherFiles}`)}`;
 }
 
 function propertyKey(keyName: string) {

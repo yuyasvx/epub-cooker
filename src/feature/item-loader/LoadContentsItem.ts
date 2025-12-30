@@ -10,8 +10,12 @@ export function loadContentsItem(loadedProject: LoadedProject, saveTo: ResolvedP
   _getEventEmitter().emit(EpubCookerEventType.BEGIN_ITEM_LOADER, loadedProject);
   const layoutType = loadedProject.projectDefinition.book['layout-type'];
   if (layoutType === PageLayoutType.reflow) {
-    return loadReflowContents(loadedProject, saveTo);
+    return loadReflowContents(loadedProject, saveTo).andTee(() => {
+      _getEventEmitter().emit(EpubCookerEventType.END_ITEM_LOADER);
+    });
   } else {
-    return loadFixedLayoutContents(loadedProject, saveTo);
+    return loadFixedLayoutContents(loadedProject, saveTo).andTee(() => {
+      _getEventEmitter().emit(EpubCookerEventType.END_ITEM_LOADER);
+    });
   }
 }
