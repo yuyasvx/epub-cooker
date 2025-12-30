@@ -1,8 +1,7 @@
 import { okAsync, ResultAsync } from 'neverthrow';
-import { SourceHandlingType } from '../../../enums/SourceHandlingType';
 import { pipe, throwing, unwrap } from '../../../lib/util/EffectUtil';
 import type { EpubProjectV2 } from '../../../value/EpubProject';
-import type { InputFileDetail } from '../../../value/InputFileDetail';
+import { type InputFileDetail, isPageContent } from '../../../value/InputFileDetail';
 import type { ItemPath } from '../../../value/ItemPath';
 import { type ResolvedPath, resolvePath } from '../../../value/ResolvedPath';
 import { EpubCookerEventType } from '../../event-emitter';
@@ -25,14 +24,19 @@ export const loadReflowContents: ContentsLoader = function (loadedProject: Loade
 
   return ResultAsync.combine([
     ...inputsAsPageContent.map((input) =>
-      runItemProcessorAsPageContent(input, contentsDir, saveTo, projectDefinition.source['css-path']).map(
+      runItemProcessorAsPageContent(input, loadedProject, saveTo, projectDefinition.source['css-path']).map(
         // TODO projectDefinition.source['css-path']を直接当てている これは安全ではないので辞めたい
         (itemPath) => createPageProcessedItem(itemPath, input),
       ),
     ),
-    ...inputsAsAsset.map((input) =>
-      runFileCopyItemProcessor(input, contentsDir, saveTo).map((itemPath) => createAssetProcessedItem(itemPath, input)),
-    ),
+    ...inputsAsAsset.map((input) => {
+      _getEventEmitter().emit(EpubCookerEventType.ITEM_LOADER_NEXT_ITEM, input);
+      return runFileCopyItemProcessor(input, loadedProject, saveTo)
+        .map((itemPath) => createAssetProcessedItem(itemPath, input))
+        .andTee(() => {
+          _getEventEmitter().emit(EpubCookerEventType.ITEM_LOADED);
+        });
+    }),
   ])
     .andThen((items) => validateToc(items, saveTo))
     .map((items) => [loadedProject, items] as const);
@@ -86,22 +90,13 @@ function customizePageList(
   );
 }
 
-function isPageContent({ isHtml, isMarkdown, isXhtml }: InputFileDetail, using: SourceHandlingType) {
-  if (using === SourceHandlingType.markdown) {
-    return isMarkdown || isHtml || isXhtml;
-  }
-  if (using === SourceHandlingType.none) {
-    return isHtml || isXhtml;
-  }
-  return false;
-}
-
 function runItemProcessorAsPageContent(
   input: InputFileDetail,
-  contentsDir: ResolvedPath,
+  loadedProject: LoadedProject,
   saveTo: ResolvedPath,
   projectCssPath?: string,
 ) {
+  _getEventEmitter().emit(EpubCookerEventType.ITEM_LOADER_NEXT_ITEM, input);
   const { isHtml, isMarkdown, isXhtml, toc } = input;
   // TODO IF式を使いたいだけでこれはオーバーなやり方なきが。。
   const processor = throwing(
@@ -119,7 +114,9 @@ function runItemProcessorAsPageContent(
     }),
   );
 
-  return processor(input, contentsDir, saveTo, projectCssPath);
+  return processor(input, loadedProject, saveTo, projectCssPath).andTee(() => {
+    _getEventEmitter().emit(EpubCookerEventType.ITEM_LOADED);
+  });
 }
 
 function createPageProcessedItem(itemPath: ItemPath, itemContext: InputFileDetail) {

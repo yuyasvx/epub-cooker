@@ -10,7 +10,7 @@ import type { ItemProcessor } from './ItemProcessor';
  * @param saveDir
  * @returns
  */
-export const runFileCopyItemProcessor: ItemProcessor = (file, contentsDir, saveDir) => {
+export const runFileCopyItemProcessor: ItemProcessor = (file, { contentsDir }, saveDir) => {
   const itemPath = ItemPath.createFromRelative(contentsDir, file.filePath);
   return FileIo.copyOne(file.filePath, ItemPath.getDestination(itemPath, saveDir))
     .map(() => itemPath)

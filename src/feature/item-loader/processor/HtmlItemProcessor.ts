@@ -11,7 +11,7 @@ const supportedFileTypes = ['text/html', 'application/xhtml+xml'];
 /**
  * @internal
  */
-export const runHtmlItemProcessor: ItemProcessor = ({ filePath, fileType }, contentsDir, saveDir, projectCssPath) =>
+export const runHtmlItemProcessor: ItemProcessor = ({ filePath, fileType }, { contentsDir }, saveDir, projectCssPath) =>
   tryThrows<IllegalFileTypeError>()(() => {
     if (fileType == null || !supportedFileTypes.includes(fileType)) {
       throw new IllegalFileTypeError(fileType, supportedFileTypes);

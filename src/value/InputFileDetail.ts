@@ -1,4 +1,5 @@
 import mime from 'mime-types';
+import { SourceHandlingType } from '../enums/SourceHandlingType';
 import { pipe, unwrap } from '../lib/util/EffectUtil';
 import type { EpubProjectV2 } from './EpubProject';
 import { ItemPath } from './ItemPath';
@@ -25,6 +26,17 @@ export function InputFileDetail(filePath: ResolvedPath, project: EpubProjectV2, 
 }
 
 export type InputFileDetail = ReturnType<typeof InputFileDetail>;
+
+/** internal */
+export function isPageContent({ isHtml, isMarkdown, isXhtml }: InputFileDetail, using: SourceHandlingType) {
+  if (using === SourceHandlingType.markdown) {
+    return isMarkdown || isHtml || isXhtml;
+  }
+  if (using === SourceHandlingType.none) {
+    return isHtml || isXhtml;
+  }
+  return false;
+}
 
 function isCoverimage(filePath: ResolvedPath, coverImagePath: string | undefined, contentsDir: ResolvedPath) {
   const itemPath = ItemPath.createFromRelative(contentsDir, filePath);
