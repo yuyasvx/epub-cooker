@@ -28,7 +28,7 @@ export const runMarkdownTocItemProcessor: ItemProcessor = (
     .asyncAndThen(() =>
       FileIo.getFile(filePath)
         .map((b) => b.toString())
-        .map(parseMarkdown),
+        .map((str) => parseMarkdown(str, filePath)),
     )
     .map(
       (parsed) =>

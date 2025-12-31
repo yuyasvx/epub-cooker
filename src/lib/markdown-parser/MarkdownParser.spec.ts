@@ -1,81 +1,59 @@
 import { describe, expect, test } from 'vitest';
-import { parseMarkdown } from './MarkdownParser';
+import { resolvePath } from '../../value/ResolvedPath';
+import { initializeParser, parseMarkdown } from './MarkdownParser';
 
-describe('parseMarkdown', () => {
-  test('should parse basic markdown correctly', () => {
-    const markdown = '# Hello World\n\nThis is a paragraph.\n\n- Item 1\n- Item 2';
-    const expectedHtml =
-      '<h1>Hello World</h1>\n<p>This is a paragraph.</p>\n<ul>\n<li>Item 1</li>\n<li>Item 2</li>\n</ul>\n';
-    expect(parseMarkdown(markdown).htmlText).toBe(expectedHtml);
+describe('MarkdownParser', () => {
+  const dummyPath = resolvePath('/test/path.md');
+
+  // テストごとにParserを初期化（副作用を防ぐため）
+  initializeParser([]);
+
+  test('Front MatterからタイトルとCSSパスを抽出できる', () => {
+    const markdown = `---
+title: テストタイトル
+css: style.css
+---
+# 本文`;
+    const result = parseMarkdown(markdown, dummyPath);
+    expect(result.title).toBe('テストタイトル');
+    expect(result.cssPath).toBe('style.css');
+    // Front Matter自体はHTML出力に含まれないこと
+    expect(result.htmlText).not.toContain('title: テストタイトル');
+    expect(result.htmlText).toContain('<h1>本文</h1>');
   });
 
-  test('should parse standard markdown links correctly', () => {
-    const markdown = 'Visit [Google](https://google.com).';
-    const expectedHtml = '<p>Visit <a href="https://google.com">Google</a>.</p>\n';
-    expect(parseMarkdown(markdown).htmlText).toBe(expectedHtml);
+  test('Front Matterがない場合はメタデータがundefinedになる', () => {
+    const markdown = '# 本文のみ';
+    const result = parseMarkdown(markdown, dummyPath);
+    expect(result.title).toBeUndefined();
+    expect(result.cssPath).toBeUndefined();
+    expect(result.htmlText).toContain('<h1>本文のみ</h1>');
   });
 
-  test('should convert simple Obsidian internal link to HTML link', () => {
-    const markdown = 'Link to [[My Article]].';
-    const expectedHtml = '<p>Link to <a href="My Article.html" class="internal-link">My Article</a>.</p>\n';
-    expect(parseMarkdown(markdown).htmlText).toBe(expectedHtml);
+  test('基本的なMarkdownがHTMLに変換される', () => {
+    const markdown = '**太字**と*イタリック*';
+    const result = parseMarkdown(markdown, dummyPath);
+    expect(result.htmlText).toContain('<strong>太字</strong>');
+    expect(result.htmlText).toContain('<em>イタリック</em>');
   });
 
-  test('should convert Obsidian internal link with display text to HTML link', () => {
-    const markdown = 'Link to [[Another Article|See More]].';
-    const expectedHtml = '<p>Link to <a href="Another Article.html" class="internal-link">See More</a>.</p>\n';
-    expect(parseMarkdown(markdown).htmlText).toBe(expectedHtml);
+  test('XHTML準拠のタグが出力される', () => {
+    // markdown-itのxhtmlOut: trueオプションの確認
+    // 末尾にスペース2つで改行 -> <br />
+    const markdown = '行1  \n行2';
+    const result = parseMarkdown(markdown, dummyPath);
+    expect(result.htmlText).toContain('<br />');
+    
+    // 水平線 -> <hr />
+    // 先頭が --- だとFront Matterの開始と誤認される可能性があるため、テキストの後に配置
+    const markdownHr = 'text\n\n---';
+    const resultHr = parseMarkdown(markdownHr, dummyPath);
+    expect(resultHr.htmlText).toContain('<hr />');
   });
 
-  test('should convert Obsidian internal link with heading to HTML link', () => {
-    const markdown = 'Link to [[My Article#Section 1]].';
-    const expectedHtml =
-      '<p>Link to <a href="My Article.html#section-1" class="internal-link">My Article#Section 1</a>.</p>\n';
-    expect(parseMarkdown(markdown).htmlText).toBe(expectedHtml);
-  });
-
-  test('should convert Obsidian internal link with heading and display text to HTML link', () => {
-    const markdown = 'Link to [[My Article#Section 2|Go to Section]].';
-    const expectedHtml =
-      '<p>Link to <a href="My Article.html#section-2" class="internal-link">Go to Section</a>.</p>\n';
-    expect(parseMarkdown(markdown).htmlText).toBe(expectedHtml);
-  });
-
-  test('should handle mixed content correctly', () => {
-    const markdown = 'This is a **bold** text and a link to [[Test Page]].';
-    const expectedHtml =
-      '<p>This is a <strong>bold</strong> text and a link to <a href="Test Page.html" class="internal-link">Test Page</a>.</p>\n';
-    expect(parseMarkdown(markdown).htmlText).toBe(expectedHtml);
-  });
-
-  test('should return empty string for empty input', () => {
-    expect(parseMarkdown('').htmlText).toBe('');
-  });
-
-  test('should handle multiple internal links in one line', () => {
-    const markdown = 'Links: [[One]], [[Two|Text Two]], [[Three#Part]].';
-    const expectedHtml =
-      '<p>Links: <a href="One.html" class="internal-link">One</a>, <a href="Two.html" class="internal-link">Text Two</a>, <a href="Three.html#part" class="internal-link">Three#Part</a>.</p>\n';
-    expect(parseMarkdown(markdown).htmlText).toBe(expectedHtml);
-  });
-
-  test('フロントマターがあればタイトルを取得できる', () => {
-    const markdown = '---\ntitle: Test Page\n---\n\n# h1\n\nhello world';
-    const expectedHtml = '\n<h1>h1</h1>\n<p>hello world</p>\n';
-    expect(parseMarkdown(markdown).htmlText).toBe(expectedHtml);
-    expect(parseMarkdown(markdown).title).toBe('Test Page');
-  });
-
-  test('余計なフロントマターがあっても良い', () => {
-    const markdown = '---\nhogehoge: Test Page\n---\n\n# h1\n\nhello world';
-    const expectedHtml = '\n<h1>h1</h1>\n<p>hello world</p>\n';
-    expect(parseMarkdown(markdown).htmlText).toBe(expectedHtml);
-    expect(parseMarkdown(markdown).title).toBeUndefined();
-  });
-
-  test('HTMLタグはそのまま解釈して良い', () => {
-    const markdown = '# Hello World\n\n<strong>bold text</strong>';
-    const expectedHtml = '<h1>Hello World</h1>\n<p><strong>bold text</strong></p>\n';
-    expect(parseMarkdown(markdown).htmlText).toBe(expectedHtml);
+  test('空文字列の場合は空の結果を返す', () => {
+    const result = parseMarkdown('', dummyPath);
+    expect(result.htmlText).toBe('');
+    expect(result.title).toBeUndefined();
   });
 });

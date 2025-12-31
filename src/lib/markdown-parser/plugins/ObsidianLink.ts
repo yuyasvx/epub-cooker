@@ -1,4 +1,6 @@
 import type MarkdownIt from 'markdown-it';
+import * as path from 'node:path';
+import { context } from '../MarkdownParser';
 import type { IStateInline } from '../type-support/IStateInline';
 
 /**
@@ -26,13 +28,29 @@ export function obsidianInternalLinks(md: MarkdownIt) {
 
     // silentモードではトークンを生成せず、マッチの可否だけを返す
     if (!silent) {
-      // リンクのhref属性を生成
-      // ここでは単純に記事名に ".html" を付けています。
-      // 必要に応じてエンコードやパスの解決ロジックを調整してください。
-      let href = `${articleName}.html`;
+      // リンク先のファイルを検索
+      const targetFile = context.files.find((file) => {
+        const fileNameWithoutExt = path.basename(file.filePath, path.extname(file.filePath));
+        // 完全一致（またはパスを含む一致）をチェック
+        // Obsidianはファイル名だけでもリンクできるし、フォルダパスを含めることもできる
+        return (
+          fileNameWithoutExt === articleName || file.filePath.endsWith(`${articleName}${path.extname(file.filePath)}`)
+        );
+      });
+
+      let href = '';
+      if (targetFile && context.currentFilePath) {
+        // 現在のファイルからの相対パスを計算
+        const relativePath = path.relative(path.dirname(context.currentFilePath), targetFile.filePath);
+        // 拡張子を .xhtml に変更
+        href = relativePath.replace(/\.md$/, '.xhtml');
+      } else {
+        // 見つからない場合はデフォルトの挙動
+        href = `${articleName}.xhtml`;
+      }
+
       if (heading) {
         // 見出しをURLのアンカー（#...）として使えるように変換
-        // 例: "見出し1" -> "見出し1" または "見出し-1"
         const anchor = heading.toLowerCase().replace(/\s+/g, '-');
         href += `#${anchor}`;
       }

@@ -11,7 +11,7 @@ import { type ResolvedPath, resolvePath } from '../../../value/ResolvedPath';
  */
 export const runAutoEmptyTocItemProcessor = (saveDir: ResolvedPath) =>
   pipe('<nav epub:type="toc" id="toc" />')
-    .map(parseMarkdown)
+    .map((str) => parseMarkdown(str, '' as ResolvedPath))
     .map(
       (parsed) =>
         ({

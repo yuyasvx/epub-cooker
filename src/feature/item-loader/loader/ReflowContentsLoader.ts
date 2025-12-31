@@ -1,4 +1,5 @@
 import { okAsync, ResultAsync } from 'neverthrow';
+import { initializeParser } from '../../../lib/markdown-parser/MarkdownParser';
 import { pipe, throwing, unwrap } from '../../../lib/util/EffectUtil';
 import type { EpubProjectV2 } from '../../../value/EpubProject';
 import { type InputFileDetail, isPageContent } from '../../../value/InputFileDetail';
@@ -21,6 +22,7 @@ export const loadReflowContents: ContentsLoader = function (loadedProject: Loade
   const { contentsDir, inputFiles, projectDefinition } = loadedProject;
   const inputsAsPageContent = filterPageItemContexts(inputFiles, projectDefinition, contentsDir);
   const inputsAsAsset = inputFiles.filter((input) => !isPageContent(input, projectDefinition.source.using));
+  initializeParser(inputFiles);
 
   return ResultAsync.combine([
     ...inputsAsPageContent.map((input) =>
