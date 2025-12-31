@@ -1,6 +1,6 @@
 import type MarkdownIt from 'markdown-it';
 import * as path from 'node:path';
-import { context } from '../MarkdownParser';
+import type { InputFileDetail } from '../../../value/InputFileDetail';
 import type { IStateInline } from '../type-support/IStateInline';
 
 /**
@@ -8,7 +8,7 @@ import type { IStateInline } from '../type-support/IStateInline';
  * @param md - markdown-itのインスタンス
  * @internal
  */
-export function obsidianInternalLinks(md: MarkdownIt) {
+export function obsidianInternalLinks(md: MarkdownIt, { files }: { files: InputFileDetail[] }) {
   // 正規表現でObsidianの内部リンクをキャプチャします。
   // [[記事名]], [[記事名|表示テキスト]], [[記事名#見出し]], [[記事名#見出し|表示テキスト]]
   const OBSIDIAN_LINK_REGEX = /^\[\[([^|\]#]+)(?:#([^|\]]+))?(?:\|([^\]]+))?\]\]/;
@@ -29,7 +29,7 @@ export function obsidianInternalLinks(md: MarkdownIt) {
     // silentモードではトークンを生成せず、マッチの可否だけを返す
     if (!silent) {
       // リンク先のファイルを検索
-      const targetFile = context.files.find((file) => {
+      const targetFile = files.find((file) => {
         const fileNameWithoutExt = path.basename(file.filePath, path.extname(file.filePath));
         // 完全一致（またはパスを含む一致）をチェック
         // Obsidianはファイル名だけでもリンクできるし、フォルダパスを含めることもできる
@@ -38,10 +38,12 @@ export function obsidianInternalLinks(md: MarkdownIt) {
         );
       });
 
+      const { currentFilePath } = state.env as Record<string, string>;
+
       let href = '';
-      if (targetFile && context.currentFilePath) {
+      if (targetFile && currentFilePath) {
         // 現在のファイルからの相対パスを計算
-        const relativePath = path.relative(path.dirname(context.currentFilePath), targetFile.filePath);
+        const relativePath = path.relative(path.dirname(currentFilePath), targetFile.filePath);
         // 拡張子を .xhtml に変更
         href = relativePath.replace(/\.md$/, '.xhtml');
       } else {

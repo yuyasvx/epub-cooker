@@ -7,11 +7,12 @@ import type { ResolvedPath } from '../../../value/ResolvedPath';
 import type { LoadedProject } from '../../project-loader';
 
 /** @internal */
-export type ItemProcessor = (
+export type ItemProcessor<T = void> = (
   input: InputFileDetail,
   loadedProject: LoadedProject,
   saveDir: ResolvedPath,
-  projectCssPath?: string,
+  projectCssPath: string | void,
+  processorEngine: T,
 ) => ResultAsync<ItemPath, EpubCookerError>;
 
 /** @internal */

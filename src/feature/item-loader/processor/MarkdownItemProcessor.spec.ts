@@ -6,6 +6,7 @@ import { PageProgressionDirectionType } from '../../../enums/PageProgressionDire
 import { EpubCookerError } from '../../../error/EpubCookerError';
 import { FileIoError } from '../../../lib/file-io/error/FileIoError';
 import * as FileIo from '../../../lib/file-io/FileIo';
+import { MarkdownParser } from '../../../lib/markdown-parser/MarkdownParser';
 import type { EpubProjectV2 } from '../../../value/EpubProject';
 import { InputFileDetail } from '../../../value/InputFileDetail';
 import type { ResolvedPath } from '../../../value/ResolvedPath';
@@ -28,6 +29,8 @@ describe('MarkdownItemProcessor', () => {
     contentsDir: '/abs/path/to/project/contents' as ResolvedPath,
   } satisfies LoadedProject;
 
+  const parser = new MarkdownParser(loadedProject.inputFiles);
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -44,6 +47,8 @@ describe('MarkdownItemProcessor', () => {
       InputFileDetail(sourcePath, project(), saveDir),
       loadedProject,
       saveDir,
+      undefined,
+      parser,
     );
 
     expect(result.isOk()).toBe(true);
@@ -60,6 +65,8 @@ describe('MarkdownItemProcessor', () => {
       InputFileDetail(invalidFile, project(), saveDir),
       loadedProject,
       saveDir,
+      undefined,
+      parser,
     );
 
     const error = result._unsafeUnwrapErr();
@@ -75,6 +82,8 @@ describe('MarkdownItemProcessor', () => {
       InputFileDetail(sourcePath, project(), saveDir),
       loadedProject,
       saveDir,
+      undefined,
+      parser,
     );
 
     expect(result.isErr()).toBe(true);
@@ -91,6 +100,8 @@ describe('MarkdownItemProcessor', () => {
       InputFileDetail(sourcePath, project(), saveDir),
       loadedProject,
       saveDir,
+      undefined,
+      parser,
     );
 
     expect(result.isErr()).toBe(true);

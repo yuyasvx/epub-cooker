@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import type { InputFileDetail } from '../../../value/InputFileDetail';
 import { resolvePath } from '../../../value/ResolvedPath';
-import { initializeParser, parseMarkdown } from '../MarkdownParser';
+import { MarkdownParser } from '../MarkdownParser';
 
 describe('obsidianEmbed', () => {
   const mockFiles: InputFileDetail[] = [
@@ -25,31 +25,26 @@ describe('obsidianEmbed', () => {
     },
   ];
 
+  const parser = new MarkdownParser(mockFiles);
   const currentPath = resolvePath('/root/contents/index.md');
 
   test('通常の画像埋め込みをimgタグに変換する', () => {
-    initializeParser(mockFiles);
     const markdown = '![[test-image.png]]';
-
-    const result = parseMarkdown(markdown, currentPath);
+    const result = parser.parseMarkdown(markdown, currentPath);
 
     expect(result.htmlText).toContain('<img src="images/test-image.png" alt="test-image.png" />');
   });
 
   test('幅指定のリサイズをimgタグに反映する', () => {
-    initializeParser(mockFiles);
     const markdown = '![[test-image.png|100]]';
-
-    const result = parseMarkdown(markdown, currentPath);
+    const result = parser.parseMarkdown(markdown, currentPath);
 
     expect(result.htmlText).toContain('<img src="images/test-image.png" width="100" alt="test-image.png" />');
   });
 
   test('幅と高さ指定のリサイズをimgタグに反映する', () => {
-    initializeParser(mockFiles);
     const markdown = '![[test-image.png|100x200]]';
-
-    const result = parseMarkdown(markdown, currentPath);
+    const result = parser.parseMarkdown(markdown, currentPath);
 
     expect(result.htmlText).toContain(
       '<img src="images/test-image.png" width="100" height="200" alt="test-image.png" />',
@@ -57,28 +52,22 @@ describe('obsidianEmbed', () => {
   });
 
   test('Altテキスト指定をimgタグに反映する', () => {
-    initializeParser(mockFiles);
     const markdown = '![[test-image.png|代替テキスト]]';
-
-    const result = parseMarkdown(markdown, currentPath);
+    const result = parser.parseMarkdown(markdown, currentPath);
 
     expect(result.htmlText).toContain('<img src="images/test-image.png" alt="代替テキスト" />');
   });
 
   test('拡張子なしでも画像ファイルが見つかれば変換する', () => {
-    initializeParser(mockFiles);
     const markdown = '![[photo]]';
-
-    const result = parseMarkdown(markdown, currentPath);
+    const result = parser.parseMarkdown(markdown, currentPath);
 
     expect(result.htmlText).toContain('<img src="sub/photo.jpg" alt="photo" />');
   });
 
   test('存在しないファイルは変換しない', () => {
-    initializeParser(mockFiles);
     const markdown = '![[not-found.png]]';
-
-    const result = parseMarkdown(markdown, currentPath);
+    const result = parser.parseMarkdown(markdown, currentPath);
 
     expect(result.htmlText).not.toContain('<img');
     expect(result.htmlText).toContain('![[not-found.png]]');

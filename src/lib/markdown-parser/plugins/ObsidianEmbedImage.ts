@@ -1,6 +1,6 @@
 import type MarkdownIt from 'markdown-it';
 import * as path from 'node:path';
-import { context } from '../MarkdownParser';
+import type { InputFileDetail } from '../../../value/InputFileDetail';
 import type { IStateInline } from '../type-support/IStateInline';
 
 /**
@@ -8,7 +8,7 @@ import type { IStateInline } from '../type-support/IStateInline';
  * @param md - markdown-itのインスタンス
  * @internal
  */
-export function obsidianEmbedImage(md: MarkdownIt) {
+export function obsidianEmbedImage(md: MarkdownIt, { files }: { files: InputFileDetail[] }) {
   const OBSIDIAN_LINK_REGEX = /^!\[\[([^|\]#]+)(?:#([^|\]]+))?(?:\|([^\]]+))?\]\]/;
 
   function obsidianLinkTokenizer(state: IStateInline, silent: boolean) {
@@ -33,8 +33,10 @@ export function obsidianEmbedImage(md: MarkdownIt) {
       return true;
     }
 
+    const { currentFilePath } = state.env as Record<string, string>;
+
     // リンク先のファイルを検索
-    const targetFile = context.files.find((file) => {
+    const targetFile = files.find((file) => {
       const targetBaseName = path.basename(file.filePath, path.extname(file.filePath));
       const fileBaseName = path.basename(fileName, path.extname(fileName));
 
@@ -54,7 +56,7 @@ export function obsidianEmbedImage(md: MarkdownIt) {
     // 画像ファイルが見つからない場合はテキストとして出力する
     // falseを返すと ! がテキスト、 [[...]] がリンクとして処理されてしまうため、
     // ここで明示的にテキストトークンとして消費する。
-    if (!targetFile || !context.currentFilePath) {
+    if (!targetFile || !currentFilePath) {
       if (!silent) {
         const textToken = state.push('text', '', 0);
         textToken.content = fullMatch;
@@ -64,7 +66,7 @@ export function obsidianEmbedImage(md: MarkdownIt) {
     }
 
     // 現在のファイルからの相対パスを計算
-    const relativePath = path.relative(path.dirname(context.currentFilePath), targetFile.filePath);
+    const relativePath = path.relative(path.dirname(currentFilePath), targetFile.filePath);
 
     // image トークンを生成
     const token = state.push('image', 'img', 0);
