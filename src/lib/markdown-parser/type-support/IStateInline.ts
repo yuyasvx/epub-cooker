@@ -8,6 +8,8 @@ type Nesting = 1 | 0 | -1;
  * @internal
  */
 export interface IStateInline {
+  Token: new (type: string, tag: string, nesting: Nesting) => IToken;
+
   src: string;
   env: unknown;
   md: MarkdownIt;

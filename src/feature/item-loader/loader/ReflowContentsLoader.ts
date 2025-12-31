@@ -1,4 +1,5 @@
 import { okAsync, ResultAsync } from 'neverthrow';
+import { MarkdownParser } from '../../../lib/markdown-parser/MarkdownParser';
 import { pipe, throwing, unwrap } from '../../../lib/util/EffectUtil';
 import type { EpubProjectV2 } from '../../../value/EpubProject';
 import { type InputFileDetail, isPageContent } from '../../../value/InputFileDetail';
@@ -10,6 +11,7 @@ import type { LoadedProject } from '../../project-loader';
 import { runAutoEmptyTocItemProcessor } from '../processor/AutoEmptyTocProcessor';
 import { runFileCopyItemProcessor } from '../processor/FileCopyItemProcessor';
 import { runHtmlItemProcessor } from '../processor/HtmlItemProcessor';
+import type { ItemProcessor } from '../processor/ItemProcessor';
 import { runMarkdownItemProcessor } from '../processor/MarkdownItemProcessor';
 import { runMarkdownTocItemProcessor } from '../processor/MarkdownTocItemProcessor';
 import type { ContentsLoader } from './ContentsLoader';
@@ -21,10 +23,11 @@ export const loadReflowContents: ContentsLoader = function (loadedProject: Loade
   const { contentsDir, inputFiles, projectDefinition } = loadedProject;
   const inputsAsPageContent = filterPageItemContexts(inputFiles, projectDefinition, contentsDir);
   const inputsAsAsset = inputFiles.filter((input) => !isPageContent(input, projectDefinition.source.using));
+  const parser = new MarkdownParser(inputFiles);
 
   return ResultAsync.combine([
     ...inputsAsPageContent.map((input) =>
-      runItemProcessorAsPageContent(input, loadedProject, saveTo, projectDefinition.source['css-path']).map(
+      runItemProcessorAsPageContent(input, loadedProject, saveTo, projectDefinition.source['css-path'], parser).map(
         // TODO projectDefinition.source['css-path']を直接当てている これは安全ではないので辞めたい
         (itemPath) => createPageProcessedItem(itemPath, input),
       ),
@@ -38,7 +41,7 @@ export const loadReflowContents: ContentsLoader = function (loadedProject: Loade
         });
     }),
   ])
-    .andThen((items) => validateToc(items, saveTo))
+    .andThen((items) => validateToc(items, saveTo, parser))
     .map((items) => [loadedProject, items] as const);
 };
 
@@ -94,7 +97,8 @@ function runItemProcessorAsPageContent(
   input: InputFileDetail,
   loadedProject: LoadedProject,
   saveTo: ResolvedPath,
-  projectCssPath?: string,
+  projectCssPath: string | void,
+  parser: MarkdownParser,
 ) {
   _getEventEmitter().emit(EpubCookerEventType.ITEM_LOADER_NEXT_ITEM, input);
   const { isHtml, isMarkdown, isXhtml, toc } = input;
@@ -112,9 +116,9 @@ function runItemProcessorAsPageContent(
       }
       return runFileCopyItemProcessor;
     }),
-  );
+  ) as ItemProcessor<MarkdownParser>;
 
-  return processor(input, loadedProject, saveTo, projectCssPath).andTee(() => {
+  return processor(input, loadedProject, saveTo, projectCssPath, parser).andTee(() => {
     _getEventEmitter().emit(EpubCookerEventType.ITEM_LOADED);
   });
 }
@@ -135,11 +139,11 @@ function createAssetProcessedItem(itemPath: ItemPath, itemContext: InputFileDeta
   return ProcessedItem(ProcessedItemType.ASSET, itemPath, 0, itemContext.fileType);
 }
 
-function validateToc(items: ProcessedItem[], saveTo: ResolvedPath) {
+function validateToc(items: ProcessedItem[], saveTo: ResolvedPath, parser: MarkdownParser) {
   if (!items.some((itm) => itm.itemType === ProcessedItemType.TOC_PAGE)) {
     _getEventEmitter().emit(EpubCookerEventType.NO_TOC);
 
-    return runAutoEmptyTocItemProcessor(saveTo).map((itemPath) => [
+    return runAutoEmptyTocItemProcessor(saveTo, parser).map((itemPath) => [
       ...items,
       ProcessedItem(ProcessedItemType.TOC_PAGE, itemPath, 0, 'application/xhtml+xml'),
     ]);

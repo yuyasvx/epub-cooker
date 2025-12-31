@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { EpubCookerError } from '../../../error/EpubCookerError';
 import * as FileIo from '../../../lib/file-io/FileIo';
-import { parseMarkdown } from '../../../lib/markdown-parser/MarkdownParser';
+import type { MarkdownParser } from '../../../lib/markdown-parser/MarkdownParser';
 import { tryThrows } from '../../../lib/util/EffectUtil';
 import { changeFileExtension, removeExtension } from '../../../lib/util/FileExtensionUtil';
 import { convertToEpubXhtml } from '../../../lib/xhtml-converter/HtmlUtil';
@@ -14,11 +14,12 @@ const supportedFileTypes = ['text/markdown'];
 /**
  * @internal
  */
-export const runMarkdownItemProcessor: ItemProcessor = (
+export const runMarkdownItemProcessor: ItemProcessor<MarkdownParser> = (
   { filePath, fileType },
   { contentsDir },
   saveDir,
   projectCssPath,
+  parser,
 ) =>
   tryThrows<IllegalFileTypeError>()(() => {
     if (fileType == null || !supportedFileTypes.includes(fileType)) {
@@ -28,7 +29,7 @@ export const runMarkdownItemProcessor: ItemProcessor = (
     .asyncAndThen(() =>
       FileIo.getFile(filePath)
         .map((b) => b.toString())
-        .map(parseMarkdown),
+        .map((str) => parser.parseMarkdown(str, filePath)),
     )
     .map(
       (parsed) =>
