@@ -119,6 +119,7 @@ describe('ReflowContentsLoader', () => {
       loadedProject,
       saveTo,
       undefined,
+      expect.anything(),
     );
     expect(runFileCopyItemProcessor).toHaveBeenCalledWith(
       {
@@ -206,6 +207,7 @@ describe('ReflowContentsLoader', () => {
       loadedProject,
       saveTo,
       undefined,
+      expect.anything(),
     );
     expect(runAutoEmptyTocItemProcessor).not.toHaveBeenCalled();
   });
@@ -264,6 +266,7 @@ describe('ReflowContentsLoader', () => {
       loadedProject,
       saveTo,
       undefined,
+      expect.anything(),
     );
     // Markdownはアセット扱いになるのでコピーされる
     expect(runFileCopyItemProcessor).toHaveBeenCalledWith(
