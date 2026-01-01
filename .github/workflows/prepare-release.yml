@@ -20,7 +20,7 @@ jobs:
       - name: Check existing tags
         run: |
           count=$(git tag -l "v${{ inputs.target-version }}")
-          if [ count -gt 0 ]; then
+          if [ -n "$count" ]; then
             echo "version ${{ inputs.target-version }} already exists"
             exit 1
           fi
@@ -38,7 +38,7 @@ jobs:
           git config --local user.name "github-actions[bot]"
           git add .
           git commit -m "Release ${{ inputs.target-version }}"
-          git push origin ${{ github.ref_name }}
+          git push origin release/v${{ inputs.target-version }}
       - name: Create Pull Request
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
