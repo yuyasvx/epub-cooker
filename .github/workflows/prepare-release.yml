@@ -1,4 +1,4 @@
-name: Run Unit Test Manually
+name: Prepare Release
 
 on:
   workflow_dispatch:
