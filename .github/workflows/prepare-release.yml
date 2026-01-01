@@ -46,4 +46,5 @@ jobs:
           gh pr create \
             --title "Release v${{ inputs.target-version }}" \
             --base main \
-            --head release/v${{ inputs.target-version }}
+            --head release/v${{ inputs.target-version }} \
+            --body "Publish v${{ inputs.target-version }}"
