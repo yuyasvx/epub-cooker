@@ -1,6 +1,13 @@
 name: Auto Publisher
 
 on:
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        required: false
+        default: false
+        type: boolean
+        description: "パッケージ公開まではやらないようにする"
   pull_request:
     branches:
       - main
@@ -10,7 +17,7 @@ jobs:
   tag:
     runs-on: ubuntu-latest
     # PRがマージされており、かつマージ元のブランチ名が一致する場合のみ実行
-    if: github.event.pull_request.merged == true && (startsWith(github.event.pull_request.head.ref, 'release/')
+    if: github.event.pull_request.merged == true && (startsWith(github.event.pull_request.head.ref, 'release/'))
 
     steps:
       - name: Checkout
@@ -71,6 +78,7 @@ jobs:
         run: npm run package:github
 
       - name: Publish package
+        if: inputs.dry-run == false
         run: npm publish --provenance --access public
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
