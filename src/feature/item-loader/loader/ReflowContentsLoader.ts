@@ -126,17 +126,17 @@ function runItemProcessorAsPageContent(
 function createPageProcessedItem(itemPath: ItemPath, itemContext: InputFileDetail) {
   // TODO ファイルサイズ取得はできていない　loadedFilesの改良が終わったらやる
   if (itemContext.toc) {
-    return ProcessedItem(ProcessedItemType.TOC_PAGE, itemPath, 0, itemContext.fileType);
+    return ProcessedItem(ProcessedItemType.TOC_PAGE, itemPath, 0);
   }
-  return ProcessedItem(ProcessedItemType.PAGE, itemPath, 0, itemContext.fileType);
+  return ProcessedItem(ProcessedItemType.PAGE, itemPath, 0);
 }
 
 function createAssetProcessedItem(itemPath: ItemPath, itemContext: InputFileDetail) {
   // TODO ファイルサイズ取得はできていない　loadedFilesの改良が終わったらやる
   if (itemContext.coverImage) {
-    return ProcessedItem(ProcessedItemType.COVER_IMAGE, itemPath, 0, itemContext.fileType);
+    return ProcessedItem(ProcessedItemType.COVER_IMAGE, itemPath, 0);
   }
-  return ProcessedItem(ProcessedItemType.ASSET, itemPath, 0, itemContext.fileType);
+  return ProcessedItem(ProcessedItemType.ASSET, itemPath, 0);
 }
 
 function validateToc(items: ProcessedItem[], saveTo: ResolvedPath, parser: MarkdownParser) {
@@ -145,7 +145,7 @@ function validateToc(items: ProcessedItem[], saveTo: ResolvedPath, parser: Markd
 
     return runAutoEmptyTocItemProcessor(saveTo, parser).map((itemPath) => [
       ...items,
-      ProcessedItem(ProcessedItemType.TOC_PAGE, itemPath, 0, 'application/xhtml+xml'),
+      ProcessedItem(ProcessedItemType.TOC_PAGE, itemPath, 0),
     ]);
   }
   return okAsync(items);
