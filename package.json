@@ -6,6 +6,9 @@
     "epub-cooker":  "dist/index.cjs"
   },
   "type": "commonjs",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "rm -rf ./dist && tsdown",
     "build:dev": "rm -rf ./dist && ENV_NAME=local tsdown",
