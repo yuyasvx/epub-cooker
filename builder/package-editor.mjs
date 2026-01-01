@@ -12,17 +12,17 @@ async function updateVersion(versionStr) {
   await fs.writeFile('package.json', replaced, 'utf8');
 }
 
-function main() {
+async function main() {
   if (process.argv[2] === 'version') {
     if (process.argv[3] == null) {
       console.error('invalid parameter');
-      return;
+      process.exit(1);
     }
-    updateVersion(process.argv[3]);
+    await updateVersion(process.argv[3]);
     return;
   }
   if (process.argv[2] === 'github-package') {
-    modifyPackageForGitHubPackages();
+    await modifyPackageForGitHubPackages();
   }
 }
 
