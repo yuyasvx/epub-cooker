@@ -25,8 +25,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git switch -c release/v{{ inputs.target-version }}
-          git push --set-upstream origin release/v{{ inputs.target-version }}
+          git switch -c release/v${{ inputs.target-version }}
+          git push --set-upstream origin release/v${{ inputs.target-version }}
       - name: Update version in package.json
         run: npm run package:version ${{ inputs.target-version }}
       - name: Commit changes
@@ -43,4 +43,4 @@ jobs:
           gh pr create \
             --title "Release v${{ inputs.target-version }}" \
             --base main \
-            --head release/v{{ inputs.target-version }}
+            --head release/v${{ inputs.target-version }}
