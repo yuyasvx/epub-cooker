@@ -1,0 +1,53 @@
+name: Release/Create Tag
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version (ex: v0.2.0, v1.0.0...)"
+        required: true
+        type: string
+      dry-run:
+        required: false
+        default: false
+        type: boolean
+        description: "Dry Run"
+  workflow_call:
+    inputs:
+      version:
+        description: "Version (ex: v0.2.0, v1.0.0...)"
+        required: true
+        type: string
+
+jobs:
+  tag:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 #6.0.1
+
+      - name: Check existing tags
+        run: |
+          count=$(git tag -l "v${{ inputs.target-version }}" | wc -l)
+          if [ count -gt 0 ]; then
+            echo "Tag ${{ inputs.version }} already exists"
+            exit 1
+          fi
+
+      - name: Create and Push Tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # タグの作成
+          git tag ${{ inputs.version }}
+
+          if [ "${{ inputs.dry-run }}" != "true" ]; then
+            git push origin ${{ inputs.version }}
+          else
+            echo "Dry run enabled: Skipping tag push"
+          fi

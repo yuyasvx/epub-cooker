@@ -1,0 +1,78 @@
+name: Release/Publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Target Tag Name"
+        required: true
+        type: string
+      dry-run:
+        required: false
+        default: false
+        type: boolean
+        description: "Dry Run"
+  workflow_call:
+    inputs:
+      version:
+        description: "Target Tag Name"
+        required: true
+        type: string
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: write
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 #6.0.1
+
+      - name: Checkout tag
+        run: |
+          count=$(git tag -l "${{ inputs.tag }}" | wc -l)
+          if [ ! count -gt 0 ]; then
+            echo "tag ${{ inputs.tag }} doesn't exists"
+            exit 1
+          fi
+          git checkout ${{ inputs.tag }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f #6.1.0
+        with:
+          node-version: 24.12.0
+          registry-url: https://npm.pkg.github.com
+          scope: "@yuyasvx"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Cache npm directory
+        uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb #5.0.1
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: ${{ runner.os }}-npm-
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Add a namespace to the package name
+        run: npm run package:github
+
+      - name: Publish package
+        if: inputs.dry-run == false
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          PUBLISH_ARGS=""
+          if [[ "$VERSION" == *"-"* ]]; then
+            PUBLISH_ARGS="--tag next"
+          fi
+          npm publish --provenance --access public $PUBLISH_ARGS
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
