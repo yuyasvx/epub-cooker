@@ -30,8 +30,8 @@ jobs:
 
       - name: Check existing tags
         run: |
-          count=$(git tag -l "v${{ inputs.target-version }}" | wc -l)
-          if [ count -gt 0 ]; then
+          count=$(git tag -l "v${{ inputs.version }}" | wc -l)
+          if [ $count -gt 0 ]; then
             echo "Tag ${{ inputs.version }} already exists"
             exit 1
           fi
