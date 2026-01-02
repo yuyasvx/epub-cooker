@@ -28,16 +28,14 @@ jobs:
 
   create-tag:
     needs: check-tag
-    if: needs.check-tag.result == 'success'
     uses: ./.github/workflows/release-create-tag.yml
     with:
-      version: ${{ needs.check-tag.outputs.tag-name }}
+      tag-name: ${{ needs.check-tag.outputs.tag-name }}
     secrets: inherit
 
   publish:
     needs: [check-tag, create-tag]
-    if: needs.check-tag.result == 'success'
     uses: ./.github/workflows/release-publish.yml
     with:
-      tag: ${{ needs.check-tag.outputs.tag-name }}
+      tag-name: ${{ needs.check-tag.outputs.tag-name }}
     secrets: inherit

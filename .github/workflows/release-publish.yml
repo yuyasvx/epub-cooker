@@ -3,7 +3,7 @@ name: Release/Publish
 on:
   workflow_dispatch:
     inputs:
-      tag:
+      tag-name:
         description: "Target Tag Name"
         required: true
         type: string
@@ -14,9 +14,10 @@ on:
         description: "Dry Run"
   workflow_call:
     inputs:
-      version:
+      tag-name:
         description: "Target Tag Name"
-        required: true
+        required: false
+        default: ""
         type: string
 
 jobs:
@@ -26,18 +27,20 @@ jobs:
       packages: write
       contents: write
       id-token: write
+    if: inputs.tag-name != ""
     steps:
       - name: Checkout
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 #6.0.1
 
       - name: Checkout tag
         run: |
-          count=$(git tag -l "${{ inputs.tag }}" | wc -l)
+          count=$(git tag -l "${{ inputs.tag-name }}" | wc -l)
+          echo &count
           if [ ! $count -gt 0 ]; then
-            echo "tag ${{ inputs.tag }} doesn't exists"
+            echo "tag ${{ inputs.tag-name }} doesn't exists"
             exit 1
           fi
-          git checkout ${{ inputs.tag }}
+          git checkout ${{ inputs.tag-name }}
 
       - name: Setup Node.js
         uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f #6.1.0
