@@ -28,6 +28,7 @@ jobs:
 
   create-tag:
     needs: check-tag
+    if: needs.check-tag.result == 'success'
     uses: ./.github/workflows/release-create-tag.yml
     with:
       version: ${{ needs.check-tag.outputs.tag-name }}
@@ -35,6 +36,7 @@ jobs:
 
   publish:
     needs: [check-tag, create-tag]
+    if: needs.check-tag.result == 'success'
     uses: ./.github/workflows/release-publish.yml
     with:
       tag: ${{ needs.check-tag.outputs.tag-name }}
