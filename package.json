@@ -5,7 +5,13 @@
   "bin": {
     "epub-cooker":  "dist/index.cjs"
   },
-  "type": "commonjs",
+  "type": "module",
+  "exports": {
+    "./*": {
+      "types": "./dist/*.d.mts",
+      "default": "./dist/*.mjs"
+    }
+  },
   "files": [
     "dist"
   ],
