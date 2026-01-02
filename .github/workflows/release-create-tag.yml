@@ -38,6 +38,15 @@ jobs:
             exit 1
           fi
 
+      - name: debug
+        run: |
+          count=$(git tag -l | wc -l)
+          echo $count
+          if [ $count -gt 0 ]; then
+            echo "Tag ${{ inputs.tag-name }} already exists"
+            exit 1
+          fi
+
       - name: Create and Push Tag
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
