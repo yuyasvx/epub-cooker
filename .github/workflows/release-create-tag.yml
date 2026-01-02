@@ -32,7 +32,7 @@ jobs:
       - name: Check existing tags
         run: |
           count=$(git tag -l "${{ inputs.tag-name }}" | wc -l)
-          echo &count
+          echo $count
           if [ $count -gt 0 ]; then
             echo "Tag ${{ inputs.tag-name }} already exists"
             exit 1

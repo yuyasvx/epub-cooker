@@ -34,7 +34,7 @@ jobs:
       - name: Checkout tag
         run: |
           count=$(git tag -l "${{ inputs.tag-name }}" | wc -l)
-          echo &count
+          echo $count
           if [ ! $count -gt 0 ]; then
             echo "tag ${{ inputs.tag-name }} doesn't exists"
             exit 1
