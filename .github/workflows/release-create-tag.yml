@@ -31,16 +31,8 @@ jobs:
 
       - name: Check existing tags
         run: |
+          git fetch --prune --unshallow --tags
           count=$(git tag -l "${{ inputs.tag-name }}" | wc -l)
-          echo $count
-          if [ $count -gt 0 ]; then
-            echo "Tag ${{ inputs.tag-name }} already exists"
-            exit 1
-          fi
-
-      - name: debug
-        run: |
-          count=$(git tag -l | wc -l)
           echo $count
           if [ $count -gt 0 ]; then
             echo "Tag ${{ inputs.tag-name }} already exists"
