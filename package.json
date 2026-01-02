@@ -3,7 +3,7 @@
   "version": "0.1.0-beta.3",
   "main": "dist/index.cjs",
   "bin": {
-    "epub-cooker":  "dist/index.mjs"
+    "epub-cooker":  "dist/bin.mjs"
   },
   "type": "module",
   "exports": {
