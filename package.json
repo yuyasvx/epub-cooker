@@ -3,9 +3,19 @@
   "version": "0.1.0-beta.3",
   "main": "dist/index.cjs",
   "bin": {
-    "epub-cooker":  "dist/index.cjs"
+    "epub-cooker":  "dist/bin.mjs"
   },
-  "type": "commonjs",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "default": "./dist/index.mjs"
+    },
+    "./*": {
+      "types": "./dist/*.d.mts",
+      "default": "./dist/*.mjs"
+    }
+  },
   "files": [
     "dist"
   ],

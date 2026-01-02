@@ -5,7 +5,7 @@ const envName = process.env.ENV_NAME;
 
 export default defineConfig({
   entry: ['src/**/*.ts', '!src/**/*.test.*', '!src/**/*.spec.*'],
-  format: ['cjs'],
+  format: ['esm'],
   target: 'node22',
   dts: true,
   clean: true,

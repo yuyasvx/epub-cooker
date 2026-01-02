@@ -15,7 +15,7 @@
     "stripInternal": true,
     "verbatimModuleSyntax": true,
     "forceConsistentCasingInFileNames": true,
-    "declarationMap": true,
+    "declarationMap": false,
     "sourceMap": true,
     "incremental": false,
     "rootDir": "./src",
