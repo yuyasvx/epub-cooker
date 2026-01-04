@@ -2,6 +2,7 @@ import { okAsync } from 'neverthrow';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { PageLayoutType } from '../../../enums/PageLayoutType';
 import { PageProgressionDirectionType } from '../../../enums/PageProgressionDirectionType';
+import { PageSpreadPositionType } from '../../../enums/PageSpreadPositionType';
 import { SourceHandlingType } from '../../../enums/SourceHandlingType';
 import { rejecting } from '../../../lib/util/EffectUtil';
 import type { EpubProjectV2 } from '../../../value/EpubProject';
@@ -115,6 +116,7 @@ describe('ReflowContentsLoader', () => {
         isMarkdown: true,
         isXhtml: false,
         toc: false,
+        spreadType: PageSpreadPositionType.NONE,
       } satisfies InputFileDetail,
       loadedProject,
       saveTo,
@@ -130,6 +132,7 @@ describe('ReflowContentsLoader', () => {
         isMarkdown: false,
         isXhtml: false,
         toc: false,
+        spreadType: PageSpreadPositionType.NONE,
       },
       loadedProject,
       saveTo,
@@ -203,6 +206,7 @@ describe('ReflowContentsLoader', () => {
         isMarkdown: true,
         isXhtml: false,
         toc: true,
+        spreadType: PageSpreadPositionType.NONE,
       },
       loadedProject,
       saveTo,
@@ -262,6 +266,7 @@ describe('ReflowContentsLoader', () => {
         isMarkdown: false,
         isXhtml: false,
         toc: false,
+        spreadType: PageSpreadPositionType.NONE,
       },
       loadedProject,
       saveTo,
@@ -278,6 +283,7 @@ describe('ReflowContentsLoader', () => {
         isMarkdown: true,
         isXhtml: false,
         toc: false,
+        spreadType: PageSpreadPositionType.NONE,
       },
       loadedProject,
       saveTo,

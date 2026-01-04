@@ -1,5 +1,6 @@
 import mime from 'mime-types';
 import { v4 } from 'uuid';
+import type { PageSpreadPositionType } from '../../../../enums/PageSpreadPositionType';
 import type { ProcessedItemType } from '../enums/ProcessedItemType';
 
 export type ProcessedItem = Readonly<{
@@ -8,10 +9,16 @@ export type ProcessedItem = Readonly<{
   itemType: ProcessedItemType;
   itemPath: string;
   fileSizeByte: number;
+  spreadPosition: PageSpreadPositionType;
 }>;
 
 /** @internal */
-export function ProcessedItem(itemType: ProcessedItemType, itemPath: string, fileSizeByte: number): ProcessedItem {
+export function ProcessedItem(
+  itemType: ProcessedItemType,
+  itemPath: string,
+  fileSizeByte: number,
+  spreadPosition: PageSpreadPositionType,
+): ProcessedItem {
   const mimeType = mime.lookup(itemPath);
   return {
     itemId: generateId(),
@@ -19,6 +26,7 @@ export function ProcessedItem(itemType: ProcessedItemType, itemPath: string, fil
     itemType,
     itemPath,
     fileSizeByte,
+    spreadPosition,
   };
 }
 

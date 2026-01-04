@@ -2,10 +2,16 @@ import { z } from 'zod/v4';
 import { PageLayoutType } from '../enums/PageLayoutType';
 import { PageProgressionDirectionType } from '../enums/PageProgressionDirectionType';
 import { PageSizeType } from '../enums/PageSizeType';
+import { PageSpreadPositionType } from '../enums/PageSpreadPositionType';
 import { SourceHandlingType } from '../enums/SourceHandlingType';
 import { IllegalSourceHandlingTypeError } from '../error/IllegalSourceHandlingTypeError';
 import { ValueGenerationError } from '../error/ValueGenerationError';
 import { tryThrows } from '../lib/util/EffectUtil';
+
+const pageOptionsSchema = z.object({
+  path: z.string(),
+  'page-spread': z.enum(Object.values(PageSpreadPositionType)).optional().default(PageSpreadPositionType.NONE),
+});
 
 export const epubProjectV2Schema = z.object({
   version: z.literal(2),
@@ -68,6 +74,7 @@ export const epubProjectV2Schema = z.object({
     contents: z.string().optional().default('contents'),
     'cover-image-path': z.string().optional(),
     pages: z.array(z.string()).optional(),
+    'page-options': z.array(pageOptionsSchema).optional(),
   }),
 });
 

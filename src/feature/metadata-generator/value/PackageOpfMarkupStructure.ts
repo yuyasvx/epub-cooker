@@ -1,4 +1,5 @@
 import { format } from 'date-fns';
+import { PageSpreadPositionType } from '../../../enums/PageSpreadPositionType';
 import type { EpubProjectV2 } from '../../../value/EpubProject';
 import { ItemPath } from '../../../value/ItemPath';
 import { ProcessedItemType } from '../../item-loader/loader/enums/ProcessedItemType';
@@ -176,6 +177,12 @@ export class PackageOpfMarkupStructure extends XmlStructure {
       $: {
         idref: item.itemId,
         ...(item.itemType === ProcessedItemType.TOC_PAGE ? { linear: 'no' } : { linear: 'yes' }),
+        ...(item.itemType === ProcessedItemType.PAGE && item.spreadPosition === PageSpreadPositionType.LEFT
+          ? { properties: 'page-spread-left' }
+          : {}),
+        ...(item.itemType === ProcessedItemType.PAGE && item.spreadPosition === PageSpreadPositionType.RIGHT
+          ? { properties: 'page-spread-right' }
+          : {}),
       },
     };
   }

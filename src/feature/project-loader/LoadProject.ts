@@ -8,7 +8,7 @@ import { EpubCookerEventType } from '../event-emitter';
 import { _getEventEmitter } from '../event-emitter/InitEvent';
 import { loadContents } from './LoadContents';
 import { EpubLoadProjectError, ProjectNotFoundError } from './ProjectLoaderError';
-import type { LoadedProject } from './value/LoadedProject';
+import type { LoadedPageOption, LoadedProject } from './value/LoadedProject';
 
 function determineProjectFile(projectDir: ResolvedPath) {
   return FileIo.getList(projectDir)
@@ -39,13 +39,34 @@ function loadProjectDefinition(projectDir: ResolvedPath) {
     .andThen(EpubProjectV2);
 }
 
+function loadPageOptions(contentsDir: ResolvedPath, project: EpubProjectV2) {
+  return (
+    project.source['page-options']?.map((option) => {
+      const filePath = resolvePath(contentsDir, option.path);
+      return {
+        filePath,
+        spreadType: option['page-spread'],
+      } satisfies LoadedPageOption;
+    }) ?? []
+  );
+}
+
 export function loadProject(projectDirPath: ResolvedPath) {
   return loadProjectDefinition(projectDirPath)
     .andThen((proj) =>
       loadContents(projectDirPath, proj).map((contents) => {
         const contentsDir = resolvePath(projectDirPath, proj.source.contents);
+        const pageOptions = loadPageOptions(contentsDir, proj);
+
         return {
-          inputFiles: contents.map((c) => InputFileDetail(c, proj, contentsDir)),
+          inputFiles: contents.map((c) =>
+            InputFileDetail(
+              c,
+              proj,
+              contentsDir,
+              pageOptions.find((o) => o.filePath === c),
+            ),
+          ),
           projectDefinition: proj,
           projectDir: projectDirPath,
           contentsDir,
