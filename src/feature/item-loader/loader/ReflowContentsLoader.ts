@@ -1,4 +1,5 @@
 import { okAsync, ResultAsync } from 'neverthrow';
+import { PageSpreadPositionType } from '../../../enums/PageSpreadPositionType';
 import { MarkdownParser } from '../../../lib/markdown-parser/MarkdownParser';
 import { pipe, throwing, unwrap } from '../../../lib/util/EffectUtil';
 import type { EpubProjectV2 } from '../../../value/EpubProject';
@@ -123,20 +124,20 @@ function runItemProcessorAsPageContent(
   });
 }
 
-function createPageProcessedItem(itemPath: ItemPath, itemContext: InputFileDetail) {
+function createPageProcessedItem(itemPath: ItemPath, input: InputFileDetail) {
   // TODO ファイルサイズ取得はできていない　loadedFilesの改良が終わったらやる
-  if (itemContext.toc) {
-    return ProcessedItem(ProcessedItemType.TOC_PAGE, itemPath, 0);
+  if (input.toc) {
+    return ProcessedItem(ProcessedItemType.TOC_PAGE, itemPath, 0, input.spreadType);
   }
-  return ProcessedItem(ProcessedItemType.PAGE, itemPath, 0);
+  return ProcessedItem(ProcessedItemType.PAGE, itemPath, 0, input.spreadType);
 }
 
-function createAssetProcessedItem(itemPath: ItemPath, itemContext: InputFileDetail) {
+function createAssetProcessedItem(itemPath: ItemPath, input: InputFileDetail) {
   // TODO ファイルサイズ取得はできていない　loadedFilesの改良が終わったらやる
-  if (itemContext.coverImage) {
-    return ProcessedItem(ProcessedItemType.COVER_IMAGE, itemPath, 0);
+  if (input.coverImage) {
+    return ProcessedItem(ProcessedItemType.COVER_IMAGE, itemPath, 0, input.spreadType);
   }
-  return ProcessedItem(ProcessedItemType.ASSET, itemPath, 0);
+  return ProcessedItem(ProcessedItemType.ASSET, itemPath, 0, input.spreadType);
 }
 
 function validateToc(items: ProcessedItem[], saveTo: ResolvedPath, parser: MarkdownParser) {
@@ -145,7 +146,7 @@ function validateToc(items: ProcessedItem[], saveTo: ResolvedPath, parser: Markd
 
     return runAutoEmptyTocItemProcessor(saveTo, parser).map((itemPath) => [
       ...items,
-      ProcessedItem(ProcessedItemType.TOC_PAGE, itemPath, 0),
+      ProcessedItem(ProcessedItemType.TOC_PAGE, itemPath, 0, PageSpreadPositionType.NONE),
     ]);
   }
   return okAsync(items);

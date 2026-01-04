@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest';
+import { PageSpreadPositionType } from '../../../enums/PageSpreadPositionType';
 import type { InputFileDetail } from '../../../value/InputFileDetail';
 import { resolvePath } from '../../../value/ResolvedPath';
 import { MarkdownParser } from '../MarkdownParser';
@@ -13,6 +14,7 @@ describe('obsidianInternalLinks', () => {
       isXhtml: false,
       coverImage: false,
       toc: false,
+      spreadType: PageSpreadPositionType.NONE,
     },
     {
       filePath: resolvePath('/root/contents/sub/article.md'),
@@ -22,6 +24,7 @@ describe('obsidianInternalLinks', () => {
       isXhtml: false,
       coverImage: false,
       toc: false,
+      spreadType: PageSpreadPositionType.NONE,
     },
   ];
   const parser = new MarkdownParser(mockFiles);

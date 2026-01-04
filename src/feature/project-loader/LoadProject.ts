@@ -1,6 +1,6 @@
 import yaml from 'yaml';
 import * as FileIo from '../../lib/file-io/FileIo';
-import { tryRejects, tryThrows } from '../../lib/util/EffectUtil';
+import { pipeNonNull, tryRejects, tryThrows } from '../../lib/util/EffectUtil';
 import { EpubProjectV2 } from '../../value/EpubProject';
 import { InputFileDetail } from '../../value/InputFileDetail';
 import { type ResolvedPath, resolvePath } from '../../value/ResolvedPath';
@@ -8,7 +8,7 @@ import { EpubCookerEventType } from '../event-emitter';
 import { _getEventEmitter } from '../event-emitter/InitEvent';
 import { loadContents } from './LoadContents';
 import { EpubLoadProjectError, ProjectNotFoundError } from './ProjectLoaderError';
-import type { LoadedProject } from './value/LoadedProject';
+import type { LoadedPageOption, LoadedProject } from './value/LoadedProject';
 
 function determineProjectFile(projectDir: ResolvedPath) {
   return FileIo.getList(projectDir)
@@ -39,13 +39,33 @@ function loadProjectDefinition(projectDir: ResolvedPath) {
     .andThen(EpubProjectV2);
 }
 
+function loadPageOptions(contentsDir: ResolvedPath, project: EpubProjectV2) {
+  return pipeNonNull(project.source['page-options'])
+    .map((options) =>
+      options.map((option) => {
+        const filePath = resolvePath(contentsDir, option.path);
+        return [
+          filePath,
+          {
+            filePath,
+            spreadType: option['page-spread'],
+          } satisfies LoadedPageOption,
+        ] as const;
+      }),
+    )
+    .map((l) => new Map(l))
+    .unwrapOr(new Map<ResolvedPath, LoadedPageOption>());
+}
+
 export function loadProject(projectDirPath: ResolvedPath) {
   return loadProjectDefinition(projectDirPath)
     .andThen((proj) =>
       loadContents(projectDirPath, proj).map((contents) => {
         const contentsDir = resolvePath(projectDirPath, proj.source.contents);
+        const pageOptions = loadPageOptions(contentsDir, proj);
+
         return {
-          inputFiles: contents.map((c) => InputFileDetail(c, proj, contentsDir)),
+          inputFiles: contents.map((c) => InputFileDetail(c, proj, contentsDir, pageOptions.get(c))),
           projectDefinition: proj,
           projectDir: projectDirPath,
           contentsDir,

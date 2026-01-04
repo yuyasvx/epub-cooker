@@ -1,11 +1,18 @@
 import mime from 'mime-types';
+import { PageSpreadPositionType } from '../enums/PageSpreadPositionType';
 import { SourceHandlingType } from '../enums/SourceHandlingType';
+import type { LoadedPageOption } from '../feature/project-loader/value/LoadedProject';
 import { pipe, unwrap } from '../lib/util/EffectUtil';
 import type { EpubProjectV2 } from './EpubProject';
 import { ItemPath } from './ItemPath';
 import type { ResolvedPath } from './ResolvedPath';
 
-export function InputFileDetail(filePath: ResolvedPath, project: EpubProjectV2, contentsDir: ResolvedPath) {
+export function InputFileDetail(
+  filePath: ResolvedPath,
+  project: EpubProjectV2,
+  contentsDir: ResolvedPath,
+  pageOptions?: LoadedPageOption,
+) {
   const fileType = unwrap(pipe(mime.lookup(filePath)).map((m) => (m === false ? 'application/octet-stream' : m)));
 
   const isMarkdown = fileType === 'text/markdown';
@@ -13,6 +20,7 @@ export function InputFileDetail(filePath: ResolvedPath, project: EpubProjectV2, 
   const isXhtml = fileType === 'application/xhtml+xml';
   const coverImage = isCoverimage(filePath, project.source['cover-image-path'], contentsDir);
   const toc = isToc(filePath, project.source['toc-page-path'], contentsDir);
+  const spreadType = pageOptions?.spreadType ?? PageSpreadPositionType.NONE;
 
   return {
     filePath,
@@ -22,6 +30,7 @@ export function InputFileDetail(filePath: ResolvedPath, project: EpubProjectV2, 
     isXhtml,
     coverImage,
     toc,
+    spreadType,
   };
 }
 

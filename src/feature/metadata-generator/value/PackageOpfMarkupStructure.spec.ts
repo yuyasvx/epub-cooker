@@ -2,6 +2,7 @@ import { format } from 'date-fns';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { PageLayoutType } from '../../../enums/PageLayoutType';
 import { PageProgressionDirectionType } from '../../../enums/PageProgressionDirectionType';
+import { PageSpreadPositionType } from '../../../enums/PageSpreadPositionType';
 import { SourceHandlingType } from '../../../enums/SourceHandlingType';
 import type { EpubProjectV2 } from '../../../value/EpubProject';
 import { ProcessedItemType } from '../../item-loader/loader/enums/ProcessedItemType';
@@ -128,6 +129,7 @@ describe('PackageOpfMarkupStructure', () => {
           itemPath: 'OEBPS/page1.xhtml',
           mimeType: 'application/xhtml+xml',
           fileSizeByte: 100,
+          spreadPosition: PageSpreadPositionType.NONE,
         },
         {
           itemId: 'item-2',
@@ -135,6 +137,7 @@ describe('PackageOpfMarkupStructure', () => {
           itemPath: 'OEBPS/image.png',
           mimeType: 'image/png',
           fileSizeByte: 200,
+          spreadPosition: PageSpreadPositionType.NONE,
         },
         {
           itemId: 'item-3',
@@ -142,6 +145,7 @@ describe('PackageOpfMarkupStructure', () => {
           itemPath: 'OEBPS/toc.xhtml',
           mimeType: 'application/xhtml+xml',
           fileSizeByte: 150,
+          spreadPosition: PageSpreadPositionType.NONE,
         },
         {
           itemId: 'item-4',
@@ -149,6 +153,7 @@ describe('PackageOpfMarkupStructure', () => {
           itemPath: 'OEBPS/cover.jpg',
           mimeType: 'image/jpeg',
           fileSizeByte: 300,
+          spreadPosition: PageSpreadPositionType.NONE,
         },
       ];
 
@@ -185,5 +190,63 @@ describe('PackageOpfMarkupStructure', () => {
       expect(spine.find((i) => i.$.idref === 'item-2')).toBeUndefined();
       expect(spine.find((i) => i.$.idref === 'item-4')).toBeUndefined();
     });
+  });
+
+  test('Spineに見開き表示時のページの表示位置が正しく設定されること', () => {
+    const items: ProcessedItem[] = [
+      {
+        itemId: 'item-1',
+        itemType: ProcessedItemType.PAGE,
+        itemPath: 'OEBPS/page1.xhtml',
+        mimeType: 'application/xhtml+xml',
+        fileSizeByte: 100,
+        spreadPosition: PageSpreadPositionType.NONE,
+      },
+      {
+        itemId: 'item-2',
+        itemType: ProcessedItemType.PAGE,
+        itemPath: 'OEBPS/page2.xhtml',
+        mimeType: 'application/xhtml+xml',
+        fileSizeByte: 100,
+        spreadPosition: PageSpreadPositionType.LEFT,
+      },
+      {
+        itemId: 'item-3',
+        itemType: ProcessedItemType.PAGE,
+        itemPath: 'OEBPS/page3.xhtml',
+        mimeType: 'application/xhtml+xml',
+        fileSizeByte: 100,
+        spreadPosition: PageSpreadPositionType.RIGHT,
+      },
+    ];
+
+    const structure = new PackageOpfMarkupStructure();
+    structure.setItems(items);
+
+    const spine = structure.content.package.spine[0]!.itemref;
+
+    // Spine: PAGEのみが含まれるべき
+    expect(spine).toEqual([
+      {
+        $: {
+          idref: 'item-1',
+          linear: 'yes',
+        },
+      },
+      {
+        $: {
+          idref: 'item-2',
+          linear: 'yes',
+          properties: 'page-spread-left',
+        },
+      },
+      {
+        $: {
+          idref: 'item-3',
+          linear: 'yes',
+          properties: 'page-spread-right',
+        },
+      },
+    ]);
   });
 });
