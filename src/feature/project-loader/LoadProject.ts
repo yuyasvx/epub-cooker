@@ -7,6 +7,8 @@ import { EpubProjectSchemaV2 } from '../../value/EpubProjectSchemaV2';
 import { InputFileDetail } from '../../value/InputFileDetail';
 import { type ResolvedPath, resolvePath } from '../../value/ResolvedPath';
 import { decideIdentifier } from '../book-identification';
+import { EpubCookerEventType } from '../event-emitter';
+import { _getEventEmitter } from '../event-emitter/InitEvent';
 import { loadContents } from './LoadContents';
 import { EpubLoadProjectError, ProjectNotFoundError } from './ProjectLoaderError';
 
@@ -62,5 +64,12 @@ export function loadProject(projectDirPath: ResolvedPath) {
           project,
         })),
     )
+    .andTee(({ inputFiles, project }) => {
+      _getEventEmitter().emit(EpubCookerEventType.PROJECT_LOADED, {
+        bookMetadata: project.metadata,
+        bookSource: project.source,
+        inputFiles,
+      });
+    })
     .mapErr((e) => new EpubLoadProjectError('EpubLoadProjectError', e));
 }

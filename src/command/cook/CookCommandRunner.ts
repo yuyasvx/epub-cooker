@@ -12,7 +12,6 @@ import { saveMarkupStructure } from '../../feature/metadata-generator';
 import { loadProject } from '../../feature/project-loader';
 import * as FileIo from '../../lib/file-io/FileIo';
 import { tryThrows } from '../../lib/util/EffectUtil';
-import type { BookMetadata } from '../../value/BookMetadata';
 import { type ResolvedPath, resolvePath } from '../../value/ResolvedPath';
 import { prepareCook } from './PrepareCook';
 
@@ -29,13 +28,7 @@ export function cook(projectDir: ResolvedPath, noPack = false) {
     .andThen(() => loadProject(projectDir))
     .andThen(({ inputFiles, project }) => loadContentsItem(project, inputFiles, resolvePath(workingDir, 'OPS')))
     .andThen(([project, items]) =>
-      saveMarkupStructure(
-        workingDir,
-        project.metadata as BookMetadata, //TODO As
-        project.config,
-        project.additionalMetadata,
-        items,
-      ),
+      saveMarkupStructure(workingDir, project.metadata, project.config, project.additionalMetadata, items),
     )
     .andThen(({ bookMetadata }) => archiveDirectory(workingDir, projectDir, bookMetadata, !noPack))
     .andThen(() => finalizeProcessedFiles(workingDir, noPack))
