@@ -2,13 +2,12 @@ import { okAsync, ResultAsync } from 'neverthrow';
 import { PageSpreadPositionType } from '../../../enums/PageSpreadPositionType';
 import { MarkdownParser } from '../../../lib/markdown-parser/MarkdownParser';
 import { pipe, throwing, unwrap } from '../../../lib/util/EffectUtil';
-import type { EpubProjectV2 } from '../../../value/EpubProject';
+import type { BookPageDetail, BookSource } from '../../../value/BookSource';
 import { type InputFileDetail, isPageContent } from '../../../value/InputFileDetail';
 import type { ItemPath } from '../../../value/ItemPath';
-import { type ResolvedPath, resolvePath } from '../../../value/ResolvedPath';
+import type { ResolvedPath } from '../../../value/ResolvedPath';
 import { EpubCookerEventType } from '../../event-emitter';
 import { _getEventEmitter } from '../../event-emitter/InitEvent';
-import type { LoadedProject } from '../../project-loader';
 import { runAutoEmptyTocItemProcessor } from '../processor/AutoEmptyTocProcessor';
 import { runFileCopyItemProcessor } from '../processor/FileCopyItemProcessor';
 import { runHtmlItemProcessor } from '../processor/HtmlItemProcessor';
@@ -20,22 +19,24 @@ import { ProcessedItemType } from './enums/ProcessedItemType';
 import { ProcessedItem } from './value/ProcessedItem';
 
 /** @internal */
-export const loadReflowContents: ContentsLoader = function (loadedProject: LoadedProject, saveTo: ResolvedPath) {
-  const { contentsDir, inputFiles, projectDefinition } = loadedProject;
-  const inputsAsPageContent = filterPageItemContexts(inputFiles, projectDefinition, contentsDir);
-  const inputsAsAsset = inputFiles.filter((input) => !isPageContent(input, projectDefinition.source.using));
+export const loadReflowContents: ContentsLoader = function (project, inputFiles, saveTo) {
+  const { source } = project;
+  const { contentsDir, cssPath, sourceHandlingType } = source;
+
+  const inputsAsPageContent = filterPageItemContexts(inputFiles, source);
+  const inputsAsAsset = inputFiles.filter((input) => !isPageContent(input, sourceHandlingType));
   const parser = new MarkdownParser(inputFiles);
 
   return ResultAsync.combine([
     ...inputsAsPageContent.map((input) =>
-      runItemProcessorAsPageContent(input, loadedProject, saveTo, projectDefinition.source['css-path'], parser).map(
+      runItemProcessorAsPageContent(input, contentsDir, saveTo, cssPath, parser).map(
         // TODO projectDefinition.source['css-path']を直接当てている これは安全ではないので辞めたい
         (itemPath) => createPageProcessedItem(itemPath, input),
       ),
     ),
     ...inputsAsAsset.map((input) => {
       _getEventEmitter().emit(EpubCookerEventType.ITEM_LOADER_NEXT_ITEM, input);
-      return runFileCopyItemProcessor(input, loadedProject, saveTo)
+      return runFileCopyItemProcessor(input, contentsDir, saveTo)
         .map((itemPath) => createAssetProcessedItem(itemPath, input))
         .andTee(() => {
           _getEventEmitter().emit(EpubCookerEventType.ITEM_LOADED);
@@ -43,12 +44,12 @@ export const loadReflowContents: ContentsLoader = function (loadedProject: Loade
     }),
   ])
     .andThen((items) => validateToc(items, saveTo, parser))
-    .map((items) => [loadedProject, items] as const);
+    .map((items) => [project, items] as const);
 };
 
-function filterPageItemContexts(itemContexts: InputFileDetail[], project: EpubProjectV2, contentsDir: ResolvedPath) {
-  const allPageItemContexts = itemContexts.filter((i) => isPageContent(i, project.source.using));
-  return customizePageList(allPageItemContexts, project.source.pages, contentsDir);
+function filterPageItemContexts(itemContexts: InputFileDetail[], bookSource: BookSource) {
+  const allPageItemContexts = itemContexts.filter((i) => isPageContent(i, bookSource.sourceHandlingType));
+  return customizePageList(allPageItemContexts, bookSource.pages);
 }
 
 /**
@@ -57,16 +58,12 @@ function filterPageItemContexts(itemContexts: InputFileDetail[], project: EpubPr
  * ページの並び順も指定されたページファイルに合わせます
  *
  * @param inputFileDetails 読み込み予定のアイテム情報
- * @param pagePaths
+ * @param pages
  * @param contentsDir
  * @returns
  */
-function customizePageList(
-  inputFileDetails: InputFileDetail[],
-  pagePaths: string[] | undefined,
-  contentsDir: ResolvedPath,
-): InputFileDetail[] {
-  if (pagePaths == null) {
+function customizePageList(inputFileDetails: InputFileDetail[], pages: BookPageDetail[]): InputFileDetail[] {
+  if (pages.length === 0) {
     return inputFileDetails;
   }
   const itemMap = new Map<ResolvedPath, InputFileDetail>();
@@ -75,12 +72,11 @@ function customizePageList(
   }
 
   const tocItems = inputFileDetails.filter((i) => i.toc);
-  const filteredPages = pagePaths
+  const filteredPages = pages
     .map((p) => {
-      const resolvedPath = resolvePath(contentsDir, p);
-      const i = itemMap.get(resolvedPath);
+      const i = itemMap.get(p.pagePath);
       if (i == null) {
-        _getEventEmitter().emit(EpubCookerEventType.PAGE_NOT_FOUND, p);
+        _getEventEmitter().emit(EpubCookerEventType.PAGE_NOT_FOUND, p.pagePath);
       }
       return i;
     })
@@ -96,7 +92,7 @@ function customizePageList(
 
 function runItemProcessorAsPageContent(
   input: InputFileDetail,
-  loadedProject: LoadedProject,
+  contentsDir: ResolvedPath,
   saveTo: ResolvedPath,
   projectCssPath: string | void,
   parser: MarkdownParser,
@@ -119,7 +115,7 @@ function runItemProcessorAsPageContent(
     }),
   ) as ItemProcessor<MarkdownParser>;
 
-  return processor(input, loadedProject, saveTo, projectCssPath, parser).andTee(() => {
+  return processor(input, contentsDir, saveTo, projectCssPath, parser).andTee(() => {
     _getEventEmitter().emit(EpubCookerEventType.ITEM_LOADED);
   });
 }

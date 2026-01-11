@@ -1,26 +1,23 @@
 import mime from 'mime-types';
 import { PageSpreadPositionType } from '../enums/PageSpreadPositionType';
 import { SourceHandlingType } from '../enums/SourceHandlingType';
-import type { LoadedPageOption } from '../feature/project-loader/value/LoadedProject';
 import { pipe, unwrap } from '../lib/util/EffectUtil';
-import type { EpubProjectV2 } from './EpubProject';
+import type { BookPageDetail, BookSource } from './BookSource';
 import { ItemPath } from './ItemPath';
 import type { ResolvedPath } from './ResolvedPath';
 
 export function InputFileDetail(
   filePath: ResolvedPath,
-  project: EpubProjectV2,
-  contentsDir: ResolvedPath,
-  pageOptions?: LoadedPageOption,
+  { contentsDir, coverImagePath, tocPath }: BookSource,
+  pageDetail?: BookPageDetail,
 ) {
   const fileType = unwrap(pipe(mime.lookup(filePath)).map((m) => (m === false ? 'application/octet-stream' : m)));
 
   const isMarkdown = fileType === 'text/markdown';
   const isHtml = fileType === 'text/html';
   const isXhtml = fileType === 'application/xhtml+xml';
-  const coverImage = isCoverimage(filePath, project.source['cover-image-path'], contentsDir);
-  const toc = isToc(filePath, project.source['toc-page-path'], contentsDir);
-  const spreadType = pageOptions?.spreadType ?? PageSpreadPositionType.NONE;
+  const coverImage = isCoverimage(filePath, coverImagePath, contentsDir);
+  const toc = isToc(filePath, tocPath, contentsDir);
 
   return {
     filePath,
@@ -30,7 +27,7 @@ export function InputFileDetail(
     isXhtml,
     coverImage,
     toc,
-    spreadType,
+    spreadType: pageDetail?.spreadType ?? PageSpreadPositionType.NONE, // TODO ページではないinputFileは表示位置の概念がないので必須オプションにすること自体が不適切
   };
 }
 

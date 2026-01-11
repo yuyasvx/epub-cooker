@@ -3,6 +3,7 @@ import { Dirent } from 'node:fs';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import * as FileIo from '../../lib/file-io/FileIo';
 import { throwing } from '../../lib/util/EffectUtil';
+import { EpubProjectSchemaV2 } from '../../value/EpubProjectSchemaV2';
 import { type ResolvedPath, resolvePath } from '../../value/ResolvedPath';
 import { loadContents } from './LoadContents';
 
@@ -35,7 +36,7 @@ describe('loadProject', () => {
 
     vi.mocked(FileIo.getList).mockReturnValue(okAsync([`project.yml`]));
 
-    const result = await loadContents(projectDirPath, {
+    const project = EpubProjectSchemaV2.toValues(projectDirPath, {
       version: 2,
       metadata: {
         title: 'title',
@@ -54,6 +55,7 @@ describe('loadProject', () => {
         contents: 'contents',
       },
     });
+    const result = await loadContents(projectDirPath, project.bookSource);
 
     expect(result.isOk()).toBe(true);
     const files = throwing(result);
@@ -75,7 +77,7 @@ describe('loadProject', () => {
 
     vi.mocked(FileIo.getList).mockReturnValue(okAsync([`project.yml`]));
 
-    const result = await loadContents(projectDirPath, {
+    const project = EpubProjectSchemaV2.toValues(projectDirPath, {
       version: 2,
       metadata: {
         title: 'title',
@@ -94,6 +96,7 @@ describe('loadProject', () => {
         contents: 'contents',
       },
     });
+    const result = await loadContents(projectDirPath, project.bookSource);
 
     expect(result.isOk()).toBe(true);
     const files = throwing(result);

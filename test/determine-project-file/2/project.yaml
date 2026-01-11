@@ -3,6 +3,7 @@ metadata:
   title: 吾輩は猫である
   language: ja
   description: あらすじ
+  identifier: id-test
 
 source:
   using: "markdown"

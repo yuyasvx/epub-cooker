@@ -1,6 +1,8 @@
-import { format } from 'date-fns';
+import { format, formatISO } from 'date-fns';
 import { PageSpreadPositionType } from '../../../enums/PageSpreadPositionType';
-import type { EpubProjectV2 } from '../../../value/EpubProject';
+import type { AbstractBookConfiguration } from '../../../value/BookConfiguration';
+import type { BookMetadata } from '../../../value/BookMetadata';
+import type { BookAdditionalMetadata } from '../../../value/EpubProject';
 import { ItemPath } from '../../../value/ItemPath';
 import { ProcessedItemType } from '../../item-loader/loader/enums/ProcessedItemType';
 import type { ProcessedItem } from '../../item-loader/loader/value/ProcessedItem';
@@ -56,19 +58,23 @@ export class PackageOpfMarkupStructure extends XmlStructure {
     };
   }
 
-  setMetadata(project: EpubProjectV2) {
-    this.setLanguage(project.metadata.language);
+  setMetadata(
+    bookMetadata: BookMetadata,
+    bookConfig: AbstractBookConfiguration,
+    additionalMetadata: BookAdditionalMetadata[],
+  ) {
+    this.setLanguage(bookMetadata.language);
 
-    const generatedMetadata = this.generateMetadata(project.metadata);
+    const generatedMetadata = this.generateMetadata(bookMetadata);
     const generatedMetas = [
-      ...this.generateAdditionalMeta(project['additional-metadata']),
-      ...this.generateSpecifiedFontsMeta(project.book['use-specified-fonts']),
+      ...this.generateAdditionalMeta(additionalMetadata),
+      ...this.generateSpecifiedFontsMeta(bookConfig.specifiedFont),
       ...this.generateModifiedDateTime(),
     ];
     generatedMetadata.meta = generatedMetas;
 
     this._content.package.metadata = [generatedMetadata];
-    this._content.package.spine[0]!.$['page-progression-direction'] = project.book['page-progression-direction'];
+    this._content.package.spine[0]!.$['page-progression-direction'] = bookConfig.progressionDirection;
   }
 
   setItems(items: ProcessedItem[]) {
@@ -82,39 +88,34 @@ export class PackageOpfMarkupStructure extends XmlStructure {
     this._content.package.$['xml:lang'] = lang;
   }
 
-  private generateMetadata(projectMetadata: EpubProjectV2['metadata']): MetadataPartialStructure {
+  private generateMetadata(bookMetadata: BookMetadata): MetadataPartialStructure {
     return {
       ...this.defaultMetadataPartialStructure,
-      'dc:language': [{ $: { id: 'language' }, _: projectMetadata.language }],
-      'dc:title': [{ $: { id: 'title' }, _: projectMetadata.title }],
+      'dc:language': [{ $: { id: 'language' }, _: bookMetadata.language }],
+      'dc:title': [{ $: { id: 'title' }, _: bookMetadata.title }],
+      'dc:identifier': [{ $: { id: 'book-id' }, _: bookMetadata.identifier }],
 
-      ...(projectMetadata.author != null
+      ...(bookMetadata.author != null
         ? {
-            'dc:creator': [{ $: { id: 'creator' }, _: projectMetadata.author }],
+            'dc:creator': [{ $: { id: 'creator' }, _: bookMetadata.author }],
           }
         : {}),
 
-      ...(projectMetadata.publisher != null
+      ...(bookMetadata.publisher != null
         ? {
-            'dc:publisher': [projectMetadata.publisher],
+            'dc:publisher': [bookMetadata.publisher],
           }
         : {}),
 
-      ...(projectMetadata['published-date'] != null
+      ...(bookMetadata.publishedDate != null
         ? {
-            'dc:date': [projectMetadata['published-date']],
-          }
-        : {}),
-
-      ...(projectMetadata.identifier != null
-        ? {
-            'dc:identifier': [{ $: { id: 'book-id' }, _: projectMetadata.identifier }],
+            'dc:date': [formatISO(bookMetadata.publishedDate, { representation: 'date' })],
           }
         : {}),
     };
   }
 
-  private generateAdditionalMeta(entries: EpubProjectV2['additional-metadata']): MetadataEntry[] {
+  private generateAdditionalMeta(entries: BookAdditionalMetadata[]): MetadataEntry[] {
     if (entries == null) {
       return [];
     }

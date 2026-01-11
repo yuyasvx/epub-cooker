@@ -1,11 +1,13 @@
 import type { ResultAsync } from 'neverthrow';
 import type { EpubCookerError } from '../../../error/EpubCookerError';
+import type { EpubProject } from '../../../value/EpubProject';
+import type { InputFileDetail } from '../../../value/InputFileDetail';
 import type { ResolvedPath } from '../../../value/ResolvedPath';
-import type { LoadedProject } from '../../project-loader';
 import type { ProcessedItem } from './value/ProcessedItem';
 
 /** @internal */
 export type ContentsLoader = (
-  loadedProject: LoadedProject,
+  project: EpubProject,
+  inputFiles: InputFileDetail[],
   saveTo: ResolvedPath,
-) => ResultAsync<[LoadedProject, ProcessedItem[]], EpubCookerError>;
+) => ResultAsync<[EpubProject, ProcessedItem[]], EpubCookerError>;

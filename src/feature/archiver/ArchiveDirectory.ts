@@ -1,7 +1,7 @@
 import archiver, { type ArchiverError } from 'archiver';
 import { createWriteStream } from 'node:fs';
 import { rejects } from '../../lib/util/EffectUtil';
-import type { EpubProjectV2 } from '../../value/EpubProject';
+import type { BookMetadata } from '../../value/BookMetadata';
 import { type ResolvedPath, resolvePath } from '../../value/ResolvedPath';
 import { EpubCookerEventType } from '../event-emitter';
 import { _getEventEmitter } from '../event-emitter/InitEvent';
@@ -9,7 +9,7 @@ import { _getEventEmitter } from '../event-emitter/InitEvent';
 export function archiveDirectory(
   workingDir: ResolvedPath,
   saveDir: ResolvedPath,
-  project: EpubProjectV2,
+  metadata: BookMetadata,
   enabled = true,
 ) {
   return rejects<ArchiverError>().run(
@@ -19,15 +19,12 @@ export function archiveDirectory(
           return resolve(undefined);
         }
 
-        const sanitizedFileName = sanitizeFileName(project.metadata.title);
+        const sanitizedFileName = sanitizeFileName(metadata.title);
         const output = createWriteStream(resolvePath(saveDir, `${sanitizedFileName}`));
         const archive = archiver('zip');
 
         output.on('close', () => {
-          _getEventEmitter().emit(EpubCookerEventType.FINISHED, [
-            project,
-            resolvePath(saveDir, `${sanitizedFileName}`),
-          ]);
+          _getEventEmitter().emit(EpubCookerEventType.FINISHED, resolvePath(saveDir, `${sanitizedFileName}`));
 
           return resolve(undefined);
         });
