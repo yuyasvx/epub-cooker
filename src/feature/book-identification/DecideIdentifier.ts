@@ -3,40 +3,35 @@ import { v4 } from 'uuid';
 import { FileNotFoundError } from '../../lib/file-io/error/FileIoError';
 import { getFile, save } from '../../lib/file-io/FileIo';
 import { pipeNonNull } from '../../lib/util/EffectUtil';
-import type { EpubProjectV2 } from '../../value/EpubProject';
+import { EpubBookMetadata, type UnidentifiedEpubBookMetadata } from '../../value/EpubBookMetadata';
 import { type ResolvedPath, resolvePath } from '../../value/ResolvedPath';
 import { BookIdentificationError } from './BookIdentificationError';
 
-export function decideIdentifier(project: EpubProjectV2, projectDir: ResolvedPath) {
-  return pipeNonNull(project.metadata.identifier)
-    .asyncMap(async () => project)
+export function decideIdentifier(
+  projectDir: ResolvedPath,
+  bookMetadata: EpubBookMetadata | UnidentifiedEpubBookMetadata,
+) {
+  return pipeNonNull((bookMetadata as EpubBookMetadata).identifier)
+    .asyncMap(async () => bookMetadata as EpubBookMetadata)
     .orElse(() => {
       const identifierFilePath = resolvePath(projectDir, 'identifier');
       return getFile(identifierFilePath)
         .map((buffer) => {
           const identifier = buffer.toString();
-          const newProject: EpubProjectV2 = {
-            ...project,
-            metadata: {
-              ...project.metadata,
-              identifier,
-            },
-          };
-          return newProject;
+          return EpubBookMetadata({
+            ...bookMetadata,
+            identifier,
+          });
         })
         .orElse((error) => {
           if (error instanceof FileNotFoundError) {
             const newIdentifier = `urn:uuid:${v4()}`;
-            return save(identifierFilePath, newIdentifier).map(() => {
-              const newProject: EpubProjectV2 = {
-                ...project,
-                metadata: {
-                  ...project.metadata,
-                  identifier: newIdentifier,
-                },
-              };
-              return newProject;
-            });
+            return save(identifierFilePath, newIdentifier).map(() =>
+              EpubBookMetadata({
+                ...bookMetadata,
+                identifier: newIdentifier,
+              }),
+            );
           }
           return err(error);
         })

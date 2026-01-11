@@ -5,14 +5,14 @@ import { printDoneMessage } from '../../app/print/PrintDoneMessage';
 import { printProjectOverviewTable } from '../../app/print/PrintProjectOverviewTable';
 import { printWarnMessage } from '../../app/print/PrintWarnMessage';
 import { archiveDirectory } from '../../feature/archiver';
-import { decideIdentifier } from '../../feature/book-identification';
 import { epubCookerEvent, EpubCookerEventType } from '../../feature/event-emitter';
 import { _getEventEmitter } from '../../feature/event-emitter/InitEvent';
 import { loadContentsItem } from '../../feature/item-loader';
 import { saveMarkupStructure } from '../../feature/metadata-generator';
-import { type LoadedProject, loadProject } from '../../feature/project-loader';
+import { loadProject } from '../../feature/project-loader';
 import * as FileIo from '../../lib/file-io/FileIo';
 import { tryThrows } from '../../lib/util/EffectUtil';
+import type { EpubBookMetadata } from '../../value/EpubBookMetadata';
 import { type ResolvedPath, resolvePath } from '../../value/ResolvedPath';
 import { prepareCook } from './PrepareCook';
 
@@ -27,14 +27,17 @@ export function cook(projectDir: ResolvedPath, noPack = false) {
 
   return prepareCook(workingDir)
     .andThen(() => loadProject(projectDir))
-    .andThen(({ contentsDir, inputFiles, projectDefinition }) =>
-      decideIdentifier(projectDefinition, projectDir).map(
-        (p) => ({ projectDefinition: p, inputFiles, projectDir, contentsDir }) satisfies LoadedProject,
+    .andThen(({ inputFiles, project }) => loadContentsItem(project, inputFiles, resolvePath(workingDir, 'OPS')))
+    .andThen(([project, items]) =>
+      saveMarkupStructure(
+        workingDir,
+        project.metadata as EpubBookMetadata, //TODO As
+        project.config,
+        project.additionalMetadata,
+        items,
       ),
     )
-    .andThen((loaded) => loadContentsItem(loaded, resolvePath(workingDir, 'OPS')))
-    .andThen(([loaded, items]) => saveMarkupStructure(workingDir, loaded.projectDefinition, items))
-    .andThen((project) => archiveDirectory(workingDir, projectDir, project, !noPack))
+    .andThen(({ bookMetadata }) => archiveDirectory(workingDir, projectDir, bookMetadata, !noPack))
     .andThen(() => finalizeProcessedFiles(workingDir, noPack))
     .andTee(() => finalize())
     .orTee(() => finalize());
@@ -56,9 +59,9 @@ function finalize() {
 }
 
 function prepareEvents() {
-  epubCookerEvent.on(EpubCookerEventType.PROJECT_LOADED, ({ inputFiles, projectDefinition }) => {
+  epubCookerEvent.on(EpubCookerEventType.PROJECT_LOADED, ({ bookMetadata, bookSource, inputFiles }) => {
     printDoneMessage('プロジェクトを読み込みました');
-    printProjectOverviewTable(projectDefinition, inputFiles);
+    printProjectOverviewTable(bookMetadata, bookSource, inputFiles);
   });
 
   epubCookerEvent.on(EpubCookerEventType.BEGIN_ITEM_LOADER, ({ inputFiles }) => {
@@ -84,7 +87,7 @@ function prepareEvents() {
     LoaderProgressBar.resume();
   });
 
-  epubCookerEvent.on(EpubCookerEventType.FINISHED, ([, destination]) => {
+  epubCookerEvent.on(EpubCookerEventType.FINISHED, (destination) => {
     printDoneMessage('製本完了');
     console.log(chalk.hex('#00cde0')(`🎉 EPUBの生成が完了しました！`));
     console.log(chalk.gray(destination));

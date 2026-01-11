@@ -1,10 +1,10 @@
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { PageLayoutType } from '../../../enums/PageLayoutType';
 import { PageProgressionDirectionType } from '../../../enums/PageProgressionDirectionType';
 import { PageSpreadPositionType } from '../../../enums/PageSpreadPositionType';
-import { SourceHandlingType } from '../../../enums/SourceHandlingType';
-import type { EpubProjectV2 } from '../../../value/EpubProject';
+import { EpubBookConfiguration } from '../../../value/EpubBookConfiguration';
+import { EpubBookMetadata } from '../../../value/EpubBookMetadata';
+import type { BookAdditionalMetadata } from '../../../value/EpubProject';
 import { ProcessedItemType } from '../../item-loader/loader/enums/ProcessedItemType';
 import type { ProcessedItem } from '../../item-loader/loader/value/ProcessedItem';
 import { PackageOpfMarkupStructure } from './PackageOpfMarkupStructure';
@@ -27,30 +27,16 @@ describe('PackageOpfMarkupStructure', () => {
   });
 
   describe('setMetadata', () => {
-    const baseProject: EpubProjectV2 = {
-      version: 2,
-      metadata: {
+    test('必須のメタデータが正しく設定されること', () => {
+      const bookMetadata = EpubBookMetadata({
         title: 'Test Book',
         language: 'ja',
-      },
-      book: {
-        'page-progression-direction': PageProgressionDirectionType.ltr,
-        'use-specified-fonts': false,
-        'layout-type': PageLayoutType.reflow,
-        fixed: { 'page-size': 'auto' },
-      },
-      source: {
-        using: SourceHandlingType.none,
-        contents: 'contents',
-        'ignore-patterns': [],
-        'ignore-unknown-file-type': true,
-        'ignore-system-file': true,
-      },
-    };
+        identifier: 'urn:isbn:1234567890',
+      });
+      const bookConfig = EpubBookConfiguration(undefined, true);
 
-    test('必須のメタデータが正しく設定されること', () => {
       const structure = new PackageOpfMarkupStructure();
-      structure.setMetadata(baseProject);
+      structure.setMetadata(bookMetadata, bookConfig, []);
 
       const [metadata] = structure.content.package.metadata;
 
@@ -60,6 +46,9 @@ describe('PackageOpfMarkupStructure', () => {
 
       // タイトル
       expect(metadata['dc:title']).toEqual([{ $: { id: 'title' }, _: 'Test Book' }]);
+
+      // 識別子
+      expect(metadata['dc:identifier']).toEqual([{ $: { id: 'book-id' }, _: 'urn:isbn:1234567890' }]);
 
       // Modified Date
       expect(metadata.meta).toEqual(
@@ -76,25 +65,19 @@ describe('PackageOpfMarkupStructure', () => {
     });
 
     test('すべてのメタデータが正しく設定されること', () => {
-      const fullProject: EpubProjectV2 = {
-        ...baseProject,
-        metadata: {
-          ...baseProject.metadata,
-          author: 'Author Name',
-          publisher: 'Publisher Name',
-          'published-date': '2023-12-31',
-          identifier: 'urn:isbn:1234567890',
-        },
-        'additional-metadata': [{ key: 'custom:meta', value: 'custom value' }],
-        book: {
-          ...baseProject.book,
-          'page-progression-direction': PageProgressionDirectionType.rtl,
-          'use-specified-fonts': true,
-        },
-      };
+      const bookMetadata = EpubBookMetadata({
+        title: 'Test Book',
+        author: 'Author Name',
+        publisher: 'Publisher Name',
+        publishedDate: parseISO('2023-12-31'),
+        language: 'ja',
+        identifier: 'urn:isbn:1234567890',
+      });
+      const additionalMetadata: BookAdditionalMetadata[] = [{ key: 'custom:meta', value: 'custom value' }];
+      const bookConfig = EpubBookConfiguration(PageProgressionDirectionType.rtl, true);
 
       const structure = new PackageOpfMarkupStructure();
-      structure.setMetadata(fullProject);
+      structure.setMetadata(bookMetadata, bookConfig, additionalMetadata);
 
       const [metadata] = structure.content.package.metadata;
 

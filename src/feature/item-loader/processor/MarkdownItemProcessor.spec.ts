@@ -1,16 +1,13 @@
 import { err, ok } from 'neverthrow';
 import { beforeEach, describe, expect, type Mock, test, vi } from 'vitest';
 import { NodeErrorType } from '../../../enums/NodeJsErrorType';
-import { PageLayoutType } from '../../../enums/PageLayoutType';
-import { PageProgressionDirectionType } from '../../../enums/PageProgressionDirectionType';
 import { EpubCookerError } from '../../../error/EpubCookerError';
 import { FileIoError } from '../../../lib/file-io/error/FileIoError';
 import * as FileIo from '../../../lib/file-io/FileIo';
 import { MarkdownParser } from '../../../lib/markdown-parser/MarkdownParser';
-import type { EpubProjectV2 } from '../../../value/EpubProject';
+import { EpubBookSource } from '../../../value/EpubBookSource';
 import { InputFileDetail } from '../../../value/InputFileDetail';
-import type { ResolvedPath } from '../../../value/ResolvedPath';
-import type { LoadedProject } from '../../project-loader';
+import { type ResolvedPath, resolvePath } from '../../../value/ResolvedPath';
 import { IllegalFileTypeError } from './ItemProcessor';
 import { runMarkdownItemProcessor } from './MarkdownItemProcessor';
 
@@ -22,14 +19,17 @@ describe('MarkdownItemProcessor', () => {
   const projectDir = '/abs/path/to/project' as ResolvedPath;
   const saveDir = '/abs/path/to/project/.working' as ResolvedPath;
 
-  const loadedProject = {
-    projectDir,
-    inputFiles: [],
-    projectDefinition: project(),
-    contentsDir: '/abs/path/to/project/contents' as ResolvedPath,
-  } satisfies LoadedProject;
+  const bookSource = EpubBookSource(
+    {
+      ignorePatterns: [],
+      ignoreSystemFile: true,
+      ignoreUnknownFileType: false,
+      sourceHandlingType: 'markdown',
+    },
+    resolvePath(projectDir, 'contents'),
+  );
 
-  const parser = new MarkdownParser(loadedProject.inputFiles);
+  const parser = new MarkdownParser([]);
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -44,8 +44,8 @@ describe('MarkdownItemProcessor', () => {
     (FileIo.save as Mock).mockReturnValue(ok(undefined));
 
     const result = await runMarkdownItemProcessor(
-      InputFileDetail(sourcePath, project(), saveDir),
-      loadedProject,
+      InputFileDetail(sourcePath, bookSource),
+      bookSource.contentsDir,
       saveDir,
       undefined,
       parser,
@@ -62,8 +62,8 @@ describe('MarkdownItemProcessor', () => {
     const invalidFile = '/abs/path/to/image.png' as ResolvedPath;
 
     const result = await runMarkdownItemProcessor(
-      InputFileDetail(invalidFile, project(), saveDir),
-      loadedProject,
+      InputFileDetail(invalidFile, bookSource),
+      bookSource.contentsDir,
       saveDir,
       undefined,
       parser,
@@ -79,8 +79,8 @@ describe('MarkdownItemProcessor', () => {
     (FileIo.getFile as Mock).mockReturnValue(err(error));
 
     const result = await runMarkdownItemProcessor(
-      InputFileDetail(sourcePath, project(), saveDir),
-      loadedProject,
+      InputFileDetail(sourcePath, bookSource),
+      bookSource.contentsDir,
       saveDir,
       undefined,
       parser,
@@ -97,8 +97,8 @@ describe('MarkdownItemProcessor', () => {
     (FileIo.save as Mock).mockReturnValue(err(error));
 
     const result = await runMarkdownItemProcessor(
-      InputFileDetail(sourcePath, project(), saveDir),
-      loadedProject,
+      InputFileDetail(sourcePath, bookSource),
+      bookSource.contentsDir,
       saveDir,
       undefined,
       parser,
@@ -108,25 +108,3 @@ describe('MarkdownItemProcessor', () => {
     expect(result._unsafeUnwrapErr()).toBeInstanceOf(EpubCookerError);
   });
 });
-
-function project() {
-  return {
-    book: {
-      'layout-type': PageLayoutType.reflow,
-      'page-progression-direction': PageProgressionDirectionType.ltr,
-      'use-specified-fonts': false,
-    },
-    metadata: {
-      title: 'book',
-      language: '',
-    },
-    source: {
-      'ignore-patterns': [],
-      'ignore-system-file': true,
-      'ignore-unknown-file-type': false,
-      contents: 'contents',
-      using: 'markdown',
-    },
-    version: 2,
-  } satisfies EpubProjectV2;
-}

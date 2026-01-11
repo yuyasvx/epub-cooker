@@ -16,7 +16,7 @@ const supportedFileTypes = ['text/markdown'];
  */
 export const runMarkdownTocItemProcessor: ItemProcessor<MarkdownParser> = (
   { filePath, fileType },
-  { contentsDir },
+  contentsDir,
   saveDir,
   projectCssPath,
   parser,

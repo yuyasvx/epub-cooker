@@ -3,7 +3,7 @@ import { err, ok, ResultAsync } from 'neverthrow';
 import { type FileIoError, FileNotFoundError } from '../../lib/file-io/error/FileIoError';
 import * as FileIo from '../../lib/file-io/FileIo';
 import { rejecting, rejects } from '../../lib/util/EffectUtil';
-import type { EpubProjectV2 } from '../../value/EpubProject';
+import type { EpubBookSource } from '../../value/EpubBookSource';
 import { ItemPath } from '../../value/ItemPath';
 import { type ResolvedPath, resolvePath } from '../../value/ResolvedPath';
 
@@ -27,13 +27,16 @@ function listAllFiles(dir: ResolvedPath) {
 /**
  * @internal
  * @param projectDir
- * @param project
+ * @param bookSource
  * @returns
  */
-export function loadContents(projectDir: ResolvedPath, project: EpubProjectV2) {
+export function loadContents(
+  projectDir: ResolvedPath,
+  { contentsDir, ignorePatterns, ignoreSystemFile }: EpubBookSource,
+) {
   // コンテンツディレクトリは当社複数個指定可能だった謎設計だったのを1ディレクトリだけ指定可能に変えたので、
   // Resultの配列にする必要もなくなったんだけど、将来的に拡張するかもしれないからこのままにする
-  const resolvedContentsDir = [project.source.contents].map((p) => resolvePath(projectDir, p));
+  const resolvedContentsDir = [contentsDir].map((p) => resolvePath(projectDir, p));
   const results = resolvedContentsDir.map((dir) => listAllFiles(dir));
   // TODO プロジェクト定義とコンテンツディレクトリが同一だったらどうなっちゃうか
 
@@ -41,12 +44,7 @@ export function loadContents(projectDir: ResolvedPath, project: EpubProjectV2) {
     ResultAsync.combine(results)
       .map((results) => results.flat())
       .map((files) =>
-        ignoreFiles(
-          files,
-          [...getDefaultIgnorePatterns(project), ...project.source['ignore-patterns']],
-          projectDir,
-          project,
-        ),
+        ignoreFiles(files, [...getDefaultIgnorePatterns(ignoreSystemFile), ...ignorePatterns], projectDir, contentsDir),
       )
       // TODO ResolvedPath[]ではなく、ファイルタイプとかも含めてオブジェクトとして返す
       .orElse((e) => {
@@ -59,8 +57,8 @@ export function loadContents(projectDir: ResolvedPath, project: EpubProjectV2) {
   );
 }
 
-export function getDefaultIgnorePatterns(project: EpubProjectV2) {
-  if (project.source['ignore-system-file']) {
+function getDefaultIgnorePatterns(ignoreSystemFile: boolean) {
+  if (ignoreSystemFile) {
     return ['**/.*', '**/.DS_Store', '**/Thumbs.db', '**/desktop.ini'];
   }
   return [];
@@ -70,10 +68,10 @@ function ignoreFiles(
   fullPaths: ResolvedPath[],
   ignorePatterns: string[],
   projectDir: ResolvedPath,
-  project: EpubProjectV2,
+  contentsDir: string,
 ) {
   return fullPaths.filter((fullPath) => {
-    const itemPath = ItemPath.createFromRelative(resolvePath(projectDir, project.source.contents), fullPath);
+    const itemPath = ItemPath.createFromRelative(resolvePath(projectDir, contentsDir), fullPath);
     return !mm.isMatch(itemPath, ignorePatterns);
   });
 }
