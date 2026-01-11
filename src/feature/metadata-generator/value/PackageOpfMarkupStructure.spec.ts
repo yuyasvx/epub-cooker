@@ -2,8 +2,8 @@ import { format, parseISO } from 'date-fns';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { PageProgressionDirectionType } from '../../../enums/PageProgressionDirectionType';
 import { PageSpreadPositionType } from '../../../enums/PageSpreadPositionType';
-import { EpubBookConfiguration } from '../../../value/EpubBookConfiguration';
-import { EpubBookMetadata } from '../../../value/EpubBookMetadata';
+import { BookConfiguration } from '../../../value/BookConfiguration';
+import { BookMetadata } from '../../../value/BookMetadata';
 import type { BookAdditionalMetadata } from '../../../value/EpubProject';
 import { ProcessedItemType } from '../../item-loader/loader/enums/ProcessedItemType';
 import type { ProcessedItem } from '../../item-loader/loader/value/ProcessedItem';
@@ -28,12 +28,12 @@ describe('PackageOpfMarkupStructure', () => {
 
   describe('setMetadata', () => {
     test('必須のメタデータが正しく設定されること', () => {
-      const bookMetadata = EpubBookMetadata({
+      const bookMetadata = BookMetadata({
         title: 'Test Book',
         language: 'ja',
         identifier: 'urn:isbn:1234567890',
       });
-      const bookConfig = EpubBookConfiguration(undefined, true);
+      const bookConfig = BookConfiguration(undefined, true);
 
       const structure = new PackageOpfMarkupStructure();
       structure.setMetadata(bookMetadata, bookConfig, []);
@@ -65,7 +65,7 @@ describe('PackageOpfMarkupStructure', () => {
     });
 
     test('すべてのメタデータが正しく設定されること', () => {
-      const bookMetadata = EpubBookMetadata({
+      const bookMetadata = BookMetadata({
         title: 'Test Book',
         author: 'Author Name',
         publisher: 'Publisher Name',
@@ -74,7 +74,7 @@ describe('PackageOpfMarkupStructure', () => {
         identifier: 'urn:isbn:1234567890',
       });
       const additionalMetadata: BookAdditionalMetadata[] = [{ key: 'custom:meta', value: 'custom value' }];
-      const bookConfig = EpubBookConfiguration(PageProgressionDirectionType.rtl, true);
+      const bookConfig = BookConfiguration(PageProgressionDirectionType.rtl, true);
 
       const structure = new PackageOpfMarkupStructure();
       structure.setMetadata(bookMetadata, bookConfig, additionalMetadata);

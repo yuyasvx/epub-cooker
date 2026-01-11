@@ -3,9 +3,9 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import { PageSpreadPositionType } from '../../../enums/PageSpreadPositionType';
 import { SourceHandlingType } from '../../../enums/SourceHandlingType';
 import { rejecting, throwing } from '../../../lib/util/EffectUtil';
-import { EpubBookConfiguration } from '../../../value/EpubBookConfiguration';
-import { EpubBookMetadata } from '../../../value/EpubBookMetadata';
-import { EpubBookSource } from '../../../value/EpubBookSource';
+import { BookConfiguration } from '../../../value/BookConfiguration';
+import { BookMetadata } from '../../../value/BookMetadata';
+import { BookSource } from '../../../value/BookSource';
 import { EpubProject } from '../../../value/EpubProject';
 import { InputFileDetail } from '../../../value/InputFileDetail';
 import { ItemPath } from '../../../value/ItemPath';
@@ -54,7 +54,7 @@ describe('ReflowContentsLoader', () => {
 
   test('Markdownファイルをページとして、画像ファイルをアセットとして処理する', async () => {
     // Arrange
-    const bookSource = EpubBookSource(
+    const bookSource = BookSource(
       { sourceHandlingType: SourceHandlingType.markdown },
       resolvePath(projectRoot, 'contents'),
     );
@@ -65,10 +65,10 @@ describe('ReflowContentsLoader', () => {
     const project = throwing(
       EpubProject(
         projectRoot,
-        EpubBookMetadata({ title: 'book title test', language: 'ja', identifier: 'id' }),
+        BookMetadata({ title: 'book title test', language: 'ja', identifier: 'id' }),
         bookSource,
         [],
-        EpubBookConfiguration(),
+        BookConfiguration(),
       ),
     );
 
@@ -129,7 +129,7 @@ describe('ReflowContentsLoader', () => {
 
   test('指定されたページ順序に従って処理する', async () => {
     // Arrange
-    const bookSource = EpubBookSource(
+    const bookSource = BookSource(
       {
         sourceHandlingType: SourceHandlingType.markdown,
         pages: [
@@ -153,10 +153,10 @@ describe('ReflowContentsLoader', () => {
     const project = throwing(
       EpubProject(
         projectRoot,
-        EpubBookMetadata({ title: 'book title test', language: 'ja', identifier: 'id' }),
+        BookMetadata({ title: 'book title test', language: 'ja', identifier: 'id' }),
         bookSource,
         [],
-        EpubBookConfiguration(),
+        BookConfiguration(),
       ),
     );
 
@@ -188,7 +188,7 @@ describe('ReflowContentsLoader', () => {
 
   test('目次ファイルはページ指定に含まれていなくても処理される', async () => {
     // Arrange
-    const bookSource = EpubBookSource(
+    const bookSource = BookSource(
       {
         sourceHandlingType: SourceHandlingType.markdown,
         tocPath: 'toc.md',
@@ -208,10 +208,10 @@ describe('ReflowContentsLoader', () => {
     const project = throwing(
       EpubProject(
         projectRoot,
-        EpubBookMetadata({ title: 'book title test', language: 'ja', identifier: 'id' }),
+        BookMetadata({ title: 'book title test', language: 'ja', identifier: 'id' }),
         bookSource,
         [],
-        EpubBookConfiguration(),
+        BookConfiguration(),
       ),
     );
 
@@ -251,7 +251,7 @@ describe('ReflowContentsLoader', () => {
 
   test('存在しないページが指定された場合はイベントを発行する', async () => {
     // Arrange
-    const bookSource = EpubBookSource(
+    const bookSource = BookSource(
       {
         sourceHandlingType: SourceHandlingType.markdown,
         tocPath: 'toc.md',
@@ -272,10 +272,10 @@ describe('ReflowContentsLoader', () => {
     const project = throwing(
       EpubProject(
         projectRoot,
-        EpubBookMetadata({ title: 'book title test', language: 'ja', identifier: 'id' }),
+        BookMetadata({ title: 'book title test', language: 'ja', identifier: 'id' }),
         bookSource,
         [],
-        EpubBookConfiguration(),
+        BookConfiguration(),
       ),
     );
 
@@ -294,7 +294,7 @@ describe('ReflowContentsLoader', () => {
 
   test('HTML/XHTMLファイルもページとして処理される', async () => {
     // Arrange
-    const bookSource = EpubBookSource(
+    const bookSource = BookSource(
       { sourceHandlingType: SourceHandlingType.markdown }, // markdownモードでもhtml/xhtmlはページ扱い
       resolvePath(projectRoot, 'contents'),
     );
@@ -305,10 +305,10 @@ describe('ReflowContentsLoader', () => {
     const project = throwing(
       EpubProject(
         projectRoot,
-        EpubBookMetadata({ title: 'book title test', language: 'ja', identifier: 'id' }),
+        BookMetadata({ title: 'book title test', language: 'ja', identifier: 'id' }),
         bookSource,
         [],
-        EpubBookConfiguration(),
+        BookConfiguration(),
       ),
     );
 
@@ -324,7 +324,7 @@ describe('ReflowContentsLoader', () => {
 
   test('SourceHandlingType.none の場合はMarkdownは無視される', async () => {
     // Arrange
-    const bookSource = EpubBookSource(
+    const bookSource = BookSource(
       { sourceHandlingType: SourceHandlingType.none },
       resolvePath(projectRoot, 'contents'),
     );
@@ -335,10 +335,10 @@ describe('ReflowContentsLoader', () => {
     const project = throwing(
       EpubProject(
         projectRoot,
-        EpubBookMetadata({ title: 'book title test', language: 'ja', identifier: 'id' }),
+        BookMetadata({ title: 'book title test', language: 'ja', identifier: 'id' }),
         bookSource,
         [],
-        EpubBookConfiguration(),
+        BookConfiguration(),
       ),
     );
 

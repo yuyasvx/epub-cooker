@@ -12,7 +12,7 @@ import { saveMarkupStructure } from '../../feature/metadata-generator';
 import { loadProject } from '../../feature/project-loader';
 import * as FileIo from '../../lib/file-io/FileIo';
 import { tryThrows } from '../../lib/util/EffectUtil';
-import type { EpubBookMetadata } from '../../value/EpubBookMetadata';
+import type { BookMetadata } from '../../value/BookMetadata';
 import { type ResolvedPath, resolvePath } from '../../value/ResolvedPath';
 import { prepareCook } from './PrepareCook';
 
@@ -31,7 +31,7 @@ export function cook(projectDir: ResolvedPath, noPack = false) {
     .andThen(([project, items]) =>
       saveMarkupStructure(
         workingDir,
-        project.metadata as EpubBookMetadata, //TODO As
+        project.metadata as BookMetadata, //TODO As
         project.config,
         project.additionalMetadata,
         items,

@@ -2,7 +2,7 @@ import { PageSpreadPositionType } from '../enums/PageSpreadPositionType';
 import { SourceHandlingType } from '../enums/SourceHandlingType';
 import type { ResolvedPath } from './ResolvedPath';
 
-export type EpubBookSource = Readonly<{
+export type BookSource = Readonly<{
   sourceHandlingType: SourceHandlingType;
   ignorePatterns: string[];
   ignoreUnknownFileType: boolean;
@@ -11,19 +11,16 @@ export type EpubBookSource = Readonly<{
   cssPath?: string;
   contentsDir: ResolvedPath;
   coverImagePath?: string;
-  pages: EpubBookSourcePageOption[];
+  pages: BookPageDetail[];
 }>;
 
-export type EpubBookSourcePageOption = Readonly<{
+export type BookPageDetail = Readonly<{
   pagePath: ResolvedPath;
   spreadType: PageSpreadPositionType;
 }>;
 
-export function EpubBookSource(
-  value: Partial<Omit<EpubBookSource, 'contentsDir'>>,
-  contentsDir: ResolvedPath,
-): EpubBookSource {
-  const defaultValue: EpubBookSource = {
+export function BookSource(value: Partial<Omit<BookSource, 'contentsDir'>>, contentsDir: ResolvedPath): BookSource {
+  const defaultValue: BookSource = {
     contentsDir,
     sourceHandlingType: SourceHandlingType.none,
     ignorePatterns: [],
@@ -45,10 +42,10 @@ export function EpubBookSource(
   };
 }
 
-export function EpubBookSourcePageOption(
+export function BookPageDetail(
   pagePath: ResolvedPath,
   spreadType: PageSpreadPositionType = PageSpreadPositionType.NONE,
-): EpubBookSourcePageOption {
+): BookPageDetail {
   return {
     pagePath,
     spreadType,

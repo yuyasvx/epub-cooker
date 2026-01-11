@@ -3,7 +3,7 @@ import { err, ok, ResultAsync } from 'neverthrow';
 import { type FileIoError, FileNotFoundError } from '../../lib/file-io/error/FileIoError';
 import * as FileIo from '../../lib/file-io/FileIo';
 import { rejecting, rejects } from '../../lib/util/EffectUtil';
-import type { EpubBookSource } from '../../value/EpubBookSource';
+import type { BookSource } from '../../value/BookSource';
 import { ItemPath } from '../../value/ItemPath';
 import { type ResolvedPath, resolvePath } from '../../value/ResolvedPath';
 
@@ -30,10 +30,7 @@ function listAllFiles(dir: ResolvedPath) {
  * @param bookSource
  * @returns
  */
-export function loadContents(
-  projectDir: ResolvedPath,
-  { contentsDir, ignorePatterns, ignoreSystemFile }: EpubBookSource,
-) {
+export function loadContents(projectDir: ResolvedPath, { contentsDir, ignorePatterns, ignoreSystemFile }: BookSource) {
   // コンテンツディレクトリは当社複数個指定可能だった謎設計だったのを1ディレクトリだけ指定可能に変えたので、
   // Resultの配列にする必要もなくなったんだけど、将来的に拡張するかもしれないからこのままにする
   const resolvedContentsDir = [contentsDir].map((p) => resolvePath(projectDir, p));

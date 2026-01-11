@@ -1,11 +1,8 @@
 import { ResultAsync } from 'neverthrow';
 import * as FileIo from '../../lib/file-io/FileIo';
 import { pipe } from '../../lib/util/EffectUtil';
-import type {
-  FixedLayoutEpubBookConfiguration,
-  ReflowLayoutEpubBookConfiguration,
-} from '../../value/EpubBookConfiguration';
-import type { EpubBookMetadata } from '../../value/EpubBookMetadata';
+import type { FixedLayoutBookConfiguration, ReflowLayoutBookConfiguration } from '../../value/BookConfiguration';
+import type { BookMetadata } from '../../value/BookMetadata';
 import type { BookAdditionalMetadata } from '../../value/EpubProject';
 import { ItemPath } from '../../value/ItemPath';
 import type { ResolvedPath } from '../../value/ResolvedPath';
@@ -17,8 +14,8 @@ import type { XmlStructure } from './value/XmlStructure';
 
 export function saveMarkupStructure(
   saveDir: ResolvedPath,
-  bookMetadata: EpubBookMetadata,
-  bookConfig: FixedLayoutEpubBookConfiguration | ReflowLayoutEpubBookConfiguration,
+  bookMetadata: BookMetadata,
+  bookConfig: FixedLayoutBookConfiguration | ReflowLayoutBookConfiguration,
   bookAdditionalMetadata: BookAdditionalMetadata[],
   items: ProcessedItem[],
 ) {

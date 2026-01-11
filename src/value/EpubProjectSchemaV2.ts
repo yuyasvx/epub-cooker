@@ -7,9 +7,9 @@ import { PageSpreadPositionType } from '../enums/PageSpreadPositionType';
 import { SourceHandlingType } from '../enums/SourceHandlingType';
 import { ValueGenerationError } from '../error/ValueGenerationError';
 import { pipe, tryThrows, unwrap } from '../lib/util/EffectUtil';
-import { EpubBookConfiguration } from './EpubBookConfiguration';
-import { EpubBookMetadata, type UnidentifiedEpubBookMetadata } from './EpubBookMetadata';
-import { EpubBookSource, EpubBookSourcePageOption } from './EpubBookSource';
+import { BookConfiguration } from './BookConfiguration';
+import { BookMetadata, type UnidentifiedBookMetadata } from './BookMetadata';
+import { BookPageDetail, BookSource } from './BookSource';
 import { type ResolvedPath, resolvePath } from './ResolvedPath';
 
 const pageOptionsSchema = z.object({
@@ -93,12 +93,12 @@ EpubProjectSchemaV2.toValues = function (projectDir: ResolvedPath, schema: EpubP
   );
   const pages = (schema.source.pages ?? []).map((p) => {
     const option = pageOptions.get(p);
-    return EpubBookSourcePageOption(resolvePath(contentsDir, p), option?.['page-spread']);
+    return BookPageDetail(resolvePath(contentsDir, p), option?.['page-spread']);
   });
 
   return {
     projectDir,
-    bookMetadata: EpubBookMetadata({
+    bookMetadata: BookMetadata({
       title: schema.metadata.title,
       author: schema.metadata.author,
       publisher: schema.metadata.publisher,
@@ -106,8 +106,8 @@ EpubProjectSchemaV2.toValues = function (projectDir: ResolvedPath, schema: EpubP
       description: schema.metadata.description,
       ...(schema.metadata['published-date'] ? { publishedDate: parseISO(schema.metadata['published-date']) } : {}),
       ...(schema.metadata.identifier != null ? { identifier: schema.metadata.identifier } : {}),
-    }) as EpubBookMetadata | UnidentifiedEpubBookMetadata,
-    bookSource: EpubBookSource(
+    }) as BookMetadata | UnidentifiedBookMetadata,
+    bookSource: BookSource(
       {
         sourceHandlingType: schema.source.using,
         coverImagePath: schema.source['cover-image-path'],
@@ -121,7 +121,7 @@ EpubProjectSchemaV2.toValues = function (projectDir: ResolvedPath, schema: EpubP
       contentsDir,
     ),
     bookAdditionaMetadata: schema['additional-metadata'] ?? [],
-    bookConfig: EpubBookConfiguration(
+    bookConfig: BookConfiguration(
       schema.book?.['page-progression-direction'],
       schema.book?.['use-specified-fonts'],
       schema.book?.['layout-type'],

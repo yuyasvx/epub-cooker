@@ -2,14 +2,14 @@ import mime from 'mime-types';
 import { PageSpreadPositionType } from '../enums/PageSpreadPositionType';
 import { SourceHandlingType } from '../enums/SourceHandlingType';
 import { pipe, unwrap } from '../lib/util/EffectUtil';
-import type { EpubBookSource, EpubBookSourcePageOption } from './EpubBookSource';
+import type { BookPageDetail, BookSource } from './BookSource';
 import { ItemPath } from './ItemPath';
 import type { ResolvedPath } from './ResolvedPath';
 
 export function InputFileDetail(
   filePath: ResolvedPath,
-  { contentsDir, coverImagePath, tocPath }: EpubBookSource,
-  pageOption?: EpubBookSourcePageOption,
+  { contentsDir, coverImagePath, tocPath }: BookSource,
+  pageDetail?: BookPageDetail,
 ) {
   const fileType = unwrap(pipe(mime.lookup(filePath)).map((m) => (m === false ? 'application/octet-stream' : m)));
 
@@ -27,7 +27,7 @@ export function InputFileDetail(
     isXhtml,
     coverImage,
     toc,
-    spreadType: pageOption?.spreadType ?? PageSpreadPositionType.NONE, // TODO ページではないinputFileは表示位置の概念がないので必須オプションにすること自体が不適切
+    spreadType: pageDetail?.spreadType ?? PageSpreadPositionType.NONE, // TODO ページではないinputFileは表示位置の概念がないので必須オプションにすること自体が不適切
   };
 }
 

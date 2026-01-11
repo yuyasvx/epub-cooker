@@ -2,7 +2,7 @@ import { okAsync, ResultAsync } from 'neverthrow';
 import { PageSpreadPositionType } from '../../../enums/PageSpreadPositionType';
 import { MarkdownParser } from '../../../lib/markdown-parser/MarkdownParser';
 import { pipe, throwing, unwrap } from '../../../lib/util/EffectUtil';
-import type { EpubBookSource, EpubBookSourcePageOption } from '../../../value/EpubBookSource';
+import type { BookPageDetail, BookSource } from '../../../value/BookSource';
 import { type InputFileDetail, isPageContent } from '../../../value/InputFileDetail';
 import type { ItemPath } from '../../../value/ItemPath';
 import type { ResolvedPath } from '../../../value/ResolvedPath';
@@ -47,7 +47,7 @@ export const loadReflowContents: ContentsLoader = function (project, inputFiles,
     .map((items) => [project, items] as const);
 };
 
-function filterPageItemContexts(itemContexts: InputFileDetail[], bookSource: EpubBookSource) {
+function filterPageItemContexts(itemContexts: InputFileDetail[], bookSource: BookSource) {
   const allPageItemContexts = itemContexts.filter((i) => isPageContent(i, bookSource.sourceHandlingType));
   return customizePageList(allPageItemContexts, bookSource.pages);
 }
@@ -62,7 +62,7 @@ function filterPageItemContexts(itemContexts: InputFileDetail[], bookSource: Epu
  * @param contentsDir
  * @returns
  */
-function customizePageList(inputFileDetails: InputFileDetail[], pages: EpubBookSourcePageOption[]): InputFileDetail[] {
+function customizePageList(inputFileDetails: InputFileDetail[], pages: BookPageDetail[]): InputFileDetail[] {
   if (pages.length === 0) {
     return inputFileDetails;
   }

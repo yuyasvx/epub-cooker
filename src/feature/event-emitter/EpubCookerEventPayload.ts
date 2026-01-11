@@ -1,5 +1,5 @@
-import type { EpubBookMetadata } from '../../value/EpubBookMetadata';
-import type { EpubBookSource } from '../../value/EpubBookSource';
+import type { BookMetadata } from '../../value/BookMetadata';
+import type { BookSource } from '../../value/BookSource';
 import type { InputFileDetail } from '../../value/InputFileDetail';
 import type { ResolvedPath } from '../../value/ResolvedPath';
 import type { EpubCookerEventCode } from './enums/EpubCookerEventCode';
@@ -7,8 +7,8 @@ import type { EpubCookerEventCode } from './enums/EpubCookerEventCode';
 export type EpubCookerEventPayload = {
   [EpubCookerEventCode.PROJECT_LOADED]: {
     inputFiles: InputFileDetail[];
-    bookMetadata: EpubBookMetadata;
-    bookSource: EpubBookSource;
+    bookMetadata: BookMetadata;
+    bookSource: BookSource;
   };
   [EpubCookerEventCode.NO_TOC]: void;
   [EpubCookerEventCode.FINISHED]: ResolvedPath;

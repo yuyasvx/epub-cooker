@@ -1,7 +1,7 @@
 import archiver, { type ArchiverError } from 'archiver';
 import { createWriteStream } from 'node:fs';
 import { rejects } from '../../lib/util/EffectUtil';
-import type { EpubBookMetadata } from '../../value/EpubBookMetadata';
+import type { BookMetadata } from '../../value/BookMetadata';
 import { type ResolvedPath, resolvePath } from '../../value/ResolvedPath';
 import { EpubCookerEventType } from '../event-emitter';
 import { _getEventEmitter } from '../event-emitter/InitEvent';
@@ -9,7 +9,7 @@ import { _getEventEmitter } from '../event-emitter/InitEvent';
 export function archiveDirectory(
   workingDir: ResolvedPath,
   saveDir: ResolvedPath,
-  metadata: EpubBookMetadata,
+  metadata: BookMetadata,
   enabled = true,
 ) {
   return rejects<ArchiverError>().run(

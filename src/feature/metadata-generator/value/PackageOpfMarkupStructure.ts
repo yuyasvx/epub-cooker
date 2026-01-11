@@ -1,7 +1,7 @@
 import { format, formatISO } from 'date-fns';
 import { PageSpreadPositionType } from '../../../enums/PageSpreadPositionType';
-import type { AbstractEpubBookConfiguration } from '../../../value/EpubBookConfiguration';
-import type { EpubBookMetadata } from '../../../value/EpubBookMetadata';
+import type { AbstractBookConfiguration } from '../../../value/BookConfiguration';
+import type { BookMetadata } from '../../../value/BookMetadata';
 import type { BookAdditionalMetadata } from '../../../value/EpubProject';
 import { ItemPath } from '../../../value/ItemPath';
 import { ProcessedItemType } from '../../item-loader/loader/enums/ProcessedItemType';
@@ -59,8 +59,8 @@ export class PackageOpfMarkupStructure extends XmlStructure {
   }
 
   setMetadata(
-    bookMetadata: EpubBookMetadata,
-    bookConfig: AbstractEpubBookConfiguration,
+    bookMetadata: BookMetadata,
+    bookConfig: AbstractBookConfiguration,
     additionalMetadata: BookAdditionalMetadata[],
   ) {
     this.setLanguage(bookMetadata.language);
@@ -88,7 +88,7 @@ export class PackageOpfMarkupStructure extends XmlStructure {
     this._content.package.$['xml:lang'] = lang;
   }
 
-  private generateMetadata(bookMetadata: EpubBookMetadata): MetadataPartialStructure {
+  private generateMetadata(bookMetadata: BookMetadata): MetadataPartialStructure {
     return {
       ...this.defaultMetadataPartialStructure,
       'dc:language': [{ $: { id: 'language' }, _: bookMetadata.language }],

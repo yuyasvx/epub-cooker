@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { rejecting } from '../../lib/util/EffectUtil';
-import { EpubBookSource } from '../../value/EpubBookSource';
+import { BookSource } from '../../value/BookSource';
 import { type ResolvedPath, resolvePath } from '../../value/ResolvedPath';
 import { loadContents } from './LoadContents';
 
@@ -31,6 +31,6 @@ describe('loadContents', () => {
   });
 });
 
-function makeProject(contentsDir: ResolvedPath): EpubBookSource {
-  return EpubBookSource({}, contentsDir);
+function makeProject(contentsDir: ResolvedPath): BookSource {
+  return BookSource({}, contentsDir);
 }

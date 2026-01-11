@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'vitest';
 import { SourceHandlingType } from '../../enums/SourceHandlingType';
 import { rejecting, throwing } from '../../lib/util/EffectUtil';
-import { EpubBookConfiguration } from '../../value/EpubBookConfiguration';
-import { EpubBookMetadata } from '../../value/EpubBookMetadata';
-import { EpubBookSource } from '../../value/EpubBookSource';
+import { BookConfiguration } from '../../value/BookConfiguration';
+import { BookMetadata } from '../../value/BookMetadata';
+import { BookSource } from '../../value/BookSource';
 import { EpubProject } from '../../value/EpubProject';
 import { resolvePath } from '../../value/ResolvedPath';
 import { loadProject } from './LoadProject';
@@ -24,8 +24,8 @@ describe('loadProject', () => {
       project: throwing(
         EpubProject(
           resolvePath(__dirname, `../../../test/determine-project-file/${targetPath}`),
-          EpubBookMetadata({ description: 'あらすじ', language: 'ja', title: '吾輩は猫である', identifier: 'id-test' }),
-          EpubBookSource(
+          BookMetadata({ description: 'あらすじ', language: 'ja', title: '吾輩は猫である', identifier: 'id-test' }),
+          BookSource(
             { sourceHandlingType: 'markdown', coverImagePath: undefined, cssPath: undefined, tocPath: undefined },
             resolvePath(__dirname, `../../../test/determine-project-file/${targetPath}/contents`),
           ),
@@ -43,17 +43,17 @@ describe('loadProject', () => {
       project: throwing(
         EpubProject(
           resolvePath(__dirname, `../../../test/minimal-project`),
-          EpubBookMetadata({
+          BookMetadata({
             identifier: 'hello-example',
             language: 'ja',
             title: '吾輩は猫である',
           }),
-          EpubBookSource(
+          BookSource(
             { sourceHandlingType: SourceHandlingType.markdown },
             resolvePath(__dirname, `../../../test/minimal-project/contents`),
           ),
           [],
-          EpubBookConfiguration(),
+          BookConfiguration(),
         ),
       ),
     });

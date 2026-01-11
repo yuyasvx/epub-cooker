@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { NodeErrorType } from '../../enums/NodeJsErrorType';
 import { FileIoError } from '../../lib/file-io/error/FileIoError';
 import * as FileIo from '../../lib/file-io/FileIo';
-import { EpubBookMetadata } from '../../value/EpubBookMetadata';
+import { BookMetadata } from '../../value/BookMetadata';
 import { resolvePath } from '../../value/ResolvedPath';
 import { decideIdentifier } from './DecideIdentifier';
 
@@ -24,7 +24,7 @@ describe('decideIdentifier', () => {
   test('読み込んだプロジェクト定義の`metadata.identifier`があればそのまま返す', async () => {
     const result = await decideIdentifier(
       projectDir,
-      EpubBookMetadata({
+      BookMetadata({
         language: 'ja',
         title: 'Test Book',
         identifier: 'existing-id',
@@ -41,7 +41,7 @@ describe('decideIdentifier', () => {
 
     const result = await decideIdentifier(
       projectDir,
-      EpubBookMetadata({
+      BookMetadata({
         language: 'ja',
         title: 'Test Book',
       }),
@@ -60,7 +60,7 @@ describe('decideIdentifier', () => {
 
     const result = await decideIdentifier(
       projectDir,
-      EpubBookMetadata({
+      BookMetadata({
         language: 'ja',
         title: 'Test Book',
       }),

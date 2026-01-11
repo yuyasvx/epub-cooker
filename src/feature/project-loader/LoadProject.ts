@@ -1,7 +1,7 @@
 import yaml from 'yaml';
 import * as FileIo from '../../lib/file-io/FileIo';
 import { pipe, tryRejects, tryThrows, unwrap } from '../../lib/util/EffectUtil';
-import type { EpubBookSourcePageOption } from '../../value/EpubBookSource';
+import type { BookPageDetail } from '../../value/BookSource';
 import { EpubProject } from '../../value/EpubProject';
 import { EpubProjectSchemaV2 } from '../../value/EpubProjectSchemaV2';
 import { InputFileDetail } from '../../value/InputFileDetail';
@@ -40,7 +40,7 @@ function loadProjectDefinition(projectDir: ResolvedPath) {
     .map((schema) => EpubProjectSchemaV2.toValues(projectDir, schema));
 }
 
-function groupPageOptions(pages: EpubBookSourcePageOption[]) {
+function groupPageOptions(pages: BookPageDetail[]) {
   return unwrap(pipe(pages.map((p) => [p.pagePath, p] as const)).map((l) => new Map(l)));
 }
 

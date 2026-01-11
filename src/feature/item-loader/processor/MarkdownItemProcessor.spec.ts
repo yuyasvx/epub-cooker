@@ -5,7 +5,7 @@ import { EpubCookerError } from '../../../error/EpubCookerError';
 import { FileIoError } from '../../../lib/file-io/error/FileIoError';
 import * as FileIo from '../../../lib/file-io/FileIo';
 import { MarkdownParser } from '../../../lib/markdown-parser/MarkdownParser';
-import { EpubBookSource } from '../../../value/EpubBookSource';
+import { BookSource } from '../../../value/BookSource';
 import { InputFileDetail } from '../../../value/InputFileDetail';
 import { type ResolvedPath, resolvePath } from '../../../value/ResolvedPath';
 import { IllegalFileTypeError } from './ItemProcessor';
@@ -19,7 +19,7 @@ describe('MarkdownItemProcessor', () => {
   const projectDir = '/abs/path/to/project' as ResolvedPath;
   const saveDir = '/abs/path/to/project/.working' as ResolvedPath;
 
-  const bookSource = EpubBookSource(
+  const bookSource = BookSource(
     {
       ignorePatterns: [],
       ignoreSystemFile: true,

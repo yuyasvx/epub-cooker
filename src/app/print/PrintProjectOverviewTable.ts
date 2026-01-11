@@ -2,16 +2,16 @@ import chalk from 'chalk';
 import columnify from 'columnify';
 import { formatISO } from 'date-fns';
 import type { SourceHandlingType } from '../../enums/SourceHandlingType';
-import type { EpubBookMetadata } from '../../value/EpubBookMetadata';
-import type { EpubBookSource, EpubBookSourcePageOption } from '../../value/EpubBookSource';
+import type { BookMetadata } from '../../value/BookMetadata';
+import type { BookPageDetail, BookSource } from '../../value/BookSource';
 import { type InputFileDetail, isPageContent } from '../../value/InputFileDetail';
 
 /**
  * @internal
  */
 export function printProjectOverviewTable(
-  bookMetadata: EpubBookMetadata,
-  bookSource: EpubBookSource,
+  bookMetadata: BookMetadata,
+  bookSource: BookSource,
   loadedFiles: InputFileDetail[],
   blankLine = true,
 ) {
@@ -20,7 +20,7 @@ export function printProjectOverviewTable(
   );
 }
 
-function content(bookMetadata: EpubBookMetadata) {
+function content(bookMetadata: BookMetadata) {
   return columnify(
     {
       [propertyKey('作品名')]: bookMetadata.title,
@@ -65,7 +65,7 @@ function bullet() {
   return chalk.hex('#ffe600')('- ');
 }
 
-function pageList(pages?: EpubBookSourcePageOption[]) {
+function pageList(pages?: BookPageDetail[]) {
   if (pages == null) {
     return '';
   }
