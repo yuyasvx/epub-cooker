@@ -1,5 +1,5 @@
-import { EpubCookerFeatureError } from '../../error/EpubCookerFeatureError';
-import type { ResolvedPath } from '../../value/ResolvedPath';
+import { EpubCookerFeatureError } from '../../../error/EpubCookerFeatureError';
+import type { ResolvedPath } from '../../../value/ResolvedPath';
 
 export class BookArchiverError extends EpubCookerFeatureError {
   public readonly errorName = 'BookArchiverError';

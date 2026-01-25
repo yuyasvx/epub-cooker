@@ -13,13 +13,16 @@ import type { ResolvedPath } from './ResolvedPath';
 
 export type BookAdditionalMetadata = { key: string; value: unknown };
 
-export type EpubProject = Readonly<{
+type EpubProjectT = Readonly<{
   projectDir: ResolvedPath;
   metadata: BookMetadata;
   additionalMetadata: BookAdditionalMetadata[];
   config: ReflowLayoutBookConfiguration | FixedLayoutBookConfiguration;
   source: BookSource;
 }>;
+
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface EpubProject extends EpubProjectT {}
 
 export function EpubProject(
   projectDir: ResolvedPath,

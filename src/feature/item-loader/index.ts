@@ -1,2 +1,2 @@
-export { BookItemLoaderError } from './BookItemLoaderError';
+export { BookItemLoaderError, BookItemLoaderErrorType } from './error/BookItemLoaderError';
 export { loadContentsItem } from './LoadContentsItem';

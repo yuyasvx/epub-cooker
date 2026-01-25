@@ -18,6 +18,7 @@ export type ItemProcessor<T = void, E = EpubCookerFeatureError> = (
 /** @internal */
 export class IllegalFileTypeError extends AbstractEpubCookerError {
   constructor(
+    public readonly filePath: string,
     public readonly fileType: string | undefined,
     public readonly allowedTypes: string[],
   ) {

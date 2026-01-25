@@ -7,7 +7,7 @@ import type { BookPageDetail, BookSource } from '../../../value/BookSource';
 import { type InputFileDetail, isPageContent } from '../../../value/InputFileDetail';
 import type { ItemPath } from '../../../value/ItemPath';
 import type { ResolvedPath } from '../../../value/ResolvedPath';
-import { EpubCookerEventType } from '../../event-emitter';
+import { EpubCookerEventCode } from '../../event-emitter';
 import { _getEventEmitter } from '../../event-emitter/InitEvent';
 import { runAutoEmptyTocItemProcessor } from '../processor/AutoEmptyTocProcessor';
 import { runFileCopyItemProcessor } from '../processor/FileCopyItemProcessor';
@@ -40,11 +40,11 @@ export const loadReflowContents: ContentsLoader<FileIoError | IllegalFileTypeErr
       ),
     ),
     ...inputsAsAsset.map((input) => {
-      _getEventEmitter().emit(EpubCookerEventType.ITEM_LOADER_NEXT_ITEM, input);
+      _getEventEmitter().emit(EpubCookerEventCode.ITEM_LOADER_NEXT_ITEM, input);
       return runFileCopyItemProcessor(input, contentsDir, saveTo)
         .map((itemPath) => createAssetProcessedItem(itemPath, input))
         .andTee(() => {
-          _getEventEmitter().emit(EpubCookerEventType.ITEM_LOADED);
+          _getEventEmitter().emit(EpubCookerEventCode.ITEM_LOADED);
         });
     }),
   ])
@@ -81,7 +81,7 @@ function customizePageList(inputFileDetails: InputFileDetail[], pages: BookPageD
     .map((p) => {
       const i = itemMap.get(p.pagePath);
       if (i == null) {
-        _getEventEmitter().emit(EpubCookerEventType.PAGE_NOT_FOUND, p.pagePath);
+        _getEventEmitter().emit(EpubCookerEventCode.PAGE_NOT_FOUND, p.pagePath);
       }
       return i;
     })
@@ -102,7 +102,7 @@ function runItemProcessorAsPageContent(
   projectCssPath: string | void,
   parser: MarkdownParser,
 ) {
-  _getEventEmitter().emit(EpubCookerEventType.ITEM_LOADER_NEXT_ITEM, input);
+  _getEventEmitter().emit(EpubCookerEventCode.ITEM_LOADER_NEXT_ITEM, input);
   const { isHtml, isMarkdown, isXhtml, toc } = input;
   // TODO IF式を使いたいだけでこれはオーバーなやり方なきが。。
   const processor = throwing(
@@ -121,7 +121,7 @@ function runItemProcessorAsPageContent(
   ) as ItemProcessor<MarkdownParser, FileIoError | IllegalFileTypeError>;
 
   return processor(input, contentsDir, saveTo, projectCssPath, parser).andTee(() => {
-    _getEventEmitter().emit(EpubCookerEventType.ITEM_LOADED);
+    _getEventEmitter().emit(EpubCookerEventCode.ITEM_LOADED);
   });
 }
 
@@ -143,7 +143,7 @@ function createAssetProcessedItem(itemPath: ItemPath, input: InputFileDetail) {
 
 function validateToc(items: ProcessedItem[], saveTo: ResolvedPath, parser: MarkdownParser) {
   if (!items.some((itm) => itm.itemType === ProcessedItemType.TOC_PAGE)) {
-    _getEventEmitter().emit(EpubCookerEventType.NO_TOC);
+    _getEventEmitter().emit(EpubCookerEventCode.NO_TOC);
 
     return runAutoEmptyTocItemProcessor(saveTo, parser).map((itemPath) => [
       ...items,

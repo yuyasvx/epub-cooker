@@ -3,9 +3,9 @@ import { createWriteStream } from 'node:fs';
 import { tryRejects } from '../../lib/util/EffectUtil';
 import type { BookMetadata } from '../../value/BookMetadata';
 import { type ResolvedPath, resolvePath } from '../../value/ResolvedPath';
-import { EpubCookerEventType } from '../event-emitter';
+import { EpubCookerEventCode } from '../event-emitter';
 import { _getEventEmitter } from '../event-emitter/InitEvent';
-import { BookArchiverError } from './BookArchiverError';
+import { BookArchiverError } from './error/BookArchiverError';
 
 export function archiveDirectory(
   workingDir: ResolvedPath,
@@ -27,7 +27,7 @@ export function archiveDirectory(
         const archive = archiver('zip');
 
         output.on('close', () => {
-          _getEventEmitter().emit(EpubCookerEventType.FINISHED, resolvePath(saveDir, `${sanitizedFileName}`));
+          _getEventEmitter().emit(EpubCookerEventCode.FINISHED, resolvePath(saveDir, `${sanitizedFileName}`));
 
           return resolve(undefined);
         });

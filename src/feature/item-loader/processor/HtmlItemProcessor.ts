@@ -19,7 +19,7 @@ export const runHtmlItemProcessor: ItemProcessor<void, IllegalFileTypeError | Fi
 ) =>
   tryThrows<IllegalFileTypeError>()(() => {
     if (fileType == null || !supportedFileTypes.includes(fileType)) {
-      throw new IllegalFileTypeError(fileType, supportedFileTypes);
+      throw new IllegalFileTypeError(filePath, fileType, supportedFileTypes);
     }
   })
     .asyncAndThen(() => FileIo.getFile(filePath).map((b) => b.toString()))

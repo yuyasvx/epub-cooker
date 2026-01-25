@@ -1,4 +1,4 @@
-import { EpubCookerFeatureError } from '../../error/EpubCookerFeatureError';
+import { EpubCookerFeatureError } from '../../../error/EpubCookerFeatureError';
 
 export class BookMetadataGeneratorError extends EpubCookerFeatureError {
   public readonly errorName = 'BookMetadataGeneratorError';

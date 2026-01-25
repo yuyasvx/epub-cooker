@@ -23,7 +23,7 @@ export const runMarkdownItemProcessor: ItemProcessor<MarkdownParser, IllegalFile
 ) =>
   tryThrows<IllegalFileTypeError>()(() => {
     if (fileType == null || !supportedFileTypes.includes(fileType)) {
-      throw new IllegalFileTypeError(fileType, supportedFileTypes);
+      throw new IllegalFileTypeError(filePath, fileType, supportedFileTypes);
     }
   })
     .asyncAndThen(() =>

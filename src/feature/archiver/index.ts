@@ -1,2 +1,2 @@
 export { archiveDirectory } from './ArchiveDirectory';
-export { BookArchiverError } from './BookArchiverError';
+export { BookArchiverError } from './error/BookArchiverError';

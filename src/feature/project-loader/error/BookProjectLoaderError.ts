@@ -1,15 +1,26 @@
-import { AbstractEpubCookerError } from '../../error/AbstractEpubCookerError';
-import { EpubCookerFeatureError } from '../../error/EpubCookerFeatureError';
+import { EpubCookerFeatureError } from '../../../error/EpubCookerFeatureError';
 
-export class BookProjectLoaderError<T extends BookProjectLoaderErrorType> extends EpubCookerFeatureError {
+export class BookProjectLoaderError extends EpubCookerFeatureError {
   public readonly errorName = 'BookProjectLoaderError';
 
-  constructor(
-    public readonly type: T,
-    public readonly detail: BookProjectLoaderErrorTypeDetailMap[T],
+  private constructor(
+    public readonly type: BookProjectLoaderErrorType,
+    public readonly detail: BookProjectLoaderErrorTypeDetailMap[BookProjectLoaderErrorType],
     public readonly cause: unknown,
   ) {
     super(cause);
+  }
+
+  static from<T extends BookProjectLoaderErrorType>(
+    type: T,
+    detail: BookProjectLoaderErrorTypeDetailMap[T],
+    cause: unknown,
+  ) {
+    return new BookProjectLoaderError(type, detail, cause);
+  }
+
+  getDetail<T extends BookProjectLoaderErrorType>() {
+    return this.detail as BookProjectLoaderErrorTypeDetailMap[T];
   }
 }
 
@@ -19,18 +30,10 @@ export const BookProjectLoaderErrorType = {
   BookProjectSchemaParse: 'BookProjectSchemaParse',
   BookIdentification: 'BookIdentification',
   IllegalBookSourceHandlingType: 'IllegalBookSourceHandlingType',
+  EmptyInputItems: 'EmptyInputItems',
 } as const;
 
 export type BookProjectLoaderErrorType = (typeof BookProjectLoaderErrorType)[keyof typeof BookProjectLoaderErrorType];
-
-/**
- * @internal
- */
-export class ProjectNotFoundError extends AbstractEpubCookerError {
-  constructor(readonly projectDir: string) {
-    super();
-  }
-}
 
 type BookProjectLoaderErrorTypeDetailMap = {
   [BookProjectLoaderErrorType.FileIo]: { filePath: string };
@@ -38,4 +41,5 @@ type BookProjectLoaderErrorTypeDetailMap = {
   [BookProjectLoaderErrorType.BookProjectSchemaParse]: { keys: string[] };
   [BookProjectLoaderErrorType.BookIdentification]: void;
   [BookProjectLoaderErrorType.IllegalBookSourceHandlingType]: { layoutType: string; using: string };
+  [BookProjectLoaderErrorType.EmptyInputItems]: { prjectDir: string };
 };
