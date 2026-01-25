@@ -12,8 +12,8 @@ import { type ResolvedPath, resolvePath } from '../../value/ResolvedPath';
 import { BookIdentificationError, decideIdentifier } from '../book-identification';
 import { EpubCookerEventCode } from '../event-emitter';
 import { _getEventEmitter } from '../event-emitter/InitEvent';
-import { EmptyInputItemsError } from './error/EmptyInputItemsError';
 import { BookProjectLoaderError, BookProjectLoaderErrorType } from './error/BookProjectLoaderError';
+import { EmptyInputItemsError } from './error/EmptyInputItemsError';
 import { ProjectNotFoundError } from './error/ProjectNotFoundError';
 import { loadContents } from './LoadContents';
 
