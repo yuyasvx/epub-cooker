@@ -1,12 +1,38 @@
-import { describe, expect, test } from 'vitest';
+import { errAsync, okAsync } from 'neverthrow';
+import { afterEach, describe, expect, test, vi } from 'vitest';
+import { NodeErrorType } from '../../enums/NodeJsErrorType';
+import { PageLayoutType } from '../../enums/PageLayoutType';
 import { SourceHandlingType } from '../../enums/SourceHandlingType';
+import { FileIoError } from '../../lib/file-io/error/FileIoError';
+import * as FileIo from '../../lib/file-io/FileIo';
 import { rejecting, throwing } from '../../lib/util/EffectUtil';
 import { BookConfiguration } from '../../value/BookConfiguration';
 import { BookMetadata } from '../../value/BookMetadata';
 import { BookSource } from '../../value/BookSource';
 import { EpubProject } from '../../value/EpubProject';
 import { resolvePath } from '../../value/ResolvedPath';
+import * as BookIdentification from '../book-identification';
+import { BookIdentificationError } from '../book-identification/BookIdentificationError';
+import { BookProjectLoaderErrorType } from './error/BookProjectLoaderError';
+import type * as LoadContents from './LoadContents';
+import { loadContents } from './LoadContents';
 import { loadProject } from './LoadProject';
+
+vi.mock('./LoadContents', async (importOriginal) => {
+  const mod = await importOriginal<typeof LoadContents>();
+  return {
+    ...mod,
+    loadContents: vi.fn((...args: Parameters<typeof mod.loadContents>) => mod.loadContents(...args)),
+  };
+});
+
+vi.mock('../book-identification', async (importOriginal) => {
+  const mod = await importOriginal<typeof BookIdentification>();
+  return {
+    ...mod,
+    decideIdentifier: vi.fn((...args: Parameters<typeof mod.decideIdentifier>) => mod.decideIdentifier(...args)),
+  };
+});
 
 describe('loadProject', () => {
   test.each`
@@ -19,9 +45,8 @@ describe('loadProject', () => {
     const result = await rejecting(
       loadProject(resolvePath(__dirname, `../../../test/determine-project-file/${targetPath}`)),
     );
-    expect(result).toStrictEqual({
-      inputFiles: [],
-      project: throwing(
+    expect(result.project).toStrictEqual(
+      throwing(
         EpubProject(
           resolvePath(__dirname, `../../../test/determine-project-file/${targetPath}`),
           BookMetadata({ description: 'あらすじ', language: 'ja', title: '吾輩は猫である', identifier: 'id-test' }),
@@ -32,15 +57,14 @@ describe('loadProject', () => {
           [],
         ),
       ),
-    });
+    );
   });
 
   test('必須項目以外省略した場合、初期値がセットされている', async () => {
     const result = await rejecting(loadProject(resolvePath(__dirname, `../../../test/minimal-project`)));
 
-    expect(result).toStrictEqual({
-      inputFiles: [],
-      project: throwing(
+    expect(result.project).toStrictEqual(
+      throwing(
         EpubProject(
           resolvePath(__dirname, `../../../test/minimal-project`),
           BookMetadata({
@@ -56,6 +80,124 @@ describe('loadProject', () => {
           BookConfiguration(),
         ),
       ),
+    );
+  });
+});
+
+describe('translateError', () => {
+  const dummyPath = resolvePath('/tmp/project');
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  test('FileIoError', async () => {
+    vi.spyOn(FileIo, 'getList').mockReturnValue(okAsync(['project.yml']));
+    vi.spyOn(FileIo, 'getFile').mockReturnValue(
+      errAsync(FileIoError.from('/tmp/project', NodeErrorType.PERMISSION_DENIED)),
+    );
+
+    await expect(rejecting(loadProject(dummyPath))).rejects.toMatchObject({
+      type: BookProjectLoaderErrorType.FileIo,
+      detail: { filePath: '/tmp/project' },
+    });
+  });
+
+  test('ProjectNotFoundError', async () => {
+    vi.spyOn(FileIo, 'getList').mockReturnValue(okAsync([]));
+
+    await expect(rejecting(loadProject(dummyPath))).rejects.toMatchObject({
+      type: BookProjectLoaderErrorType.ProjectNotFound,
+      detail: { prjectDir: dummyPath },
+    });
+  });
+
+  test('BookProjectSchemaParseError', async () => {
+    vi.spyOn(FileIo, 'getList').mockReturnValue(okAsync(['project.yml']));
+    vi.spyOn(FileIo, 'getFile').mockReturnValue(okAsync(Buffer.from('version: 2')));
+
+    await expect(rejecting(loadProject(dummyPath))).rejects.toMatchObject({
+      type: BookProjectLoaderErrorType.BookProjectSchemaParse,
+      detail: { keys: ['metadata', 'source'] },
+    });
+  });
+
+  test('BookIdentificationError', async () => {
+    vi.spyOn(FileIo, 'getList').mockReturnValue(okAsync(['project.yml']));
+    vi.spyOn(FileIo, 'getFile').mockReturnValue(
+      okAsync(
+        Buffer.from(`
+version: 2
+metadata:
+  title: test
+  language: ja
+source:
+  using: markdown
+`),
+      ),
+    );
+
+    vi.mocked(BookIdentification.decideIdentifier).mockReturnValue(
+      errAsync(new BookIdentificationError(dummyPath, new Error('mock error'))),
+    );
+
+    await expect(rejecting(loadProject(dummyPath))).rejects.toMatchObject({
+      type: BookProjectLoaderErrorType.BookIdentification,
+      detail: undefined,
+    });
+  });
+
+  test('IllegalBookSourceHandlingTypeError', async () => {
+    vi.spyOn(FileIo, 'getList').mockReturnValue(okAsync(['project.yml']));
+    vi.spyOn(FileIo, 'getFile').mockReturnValue(
+      okAsync(
+        Buffer.from(`
+version: 2
+metadata:
+  title: test
+  language: ja
+book:
+  layout-type: reflow
+source:
+  using: photo
+`),
+      ),
+    );
+    vi.mocked(BookIdentification.decideIdentifier).mockReturnValue(
+      okAsync(BookMetadata({ title: 'test', language: 'ja', identifier: 'id' })),
+    );
+
+    await expect(rejecting(loadProject(dummyPath))).rejects.toMatchObject({
+      type: BookProjectLoaderErrorType.IllegalBookSourceHandlingType,
+      detail: {
+        layoutType: PageLayoutType.reflow,
+        using: SourceHandlingType.photo,
+      },
+    });
+  });
+
+  test('EmptyInputItemsError', async () => {
+    vi.spyOn(FileIo, 'getList').mockReturnValue(okAsync(['project.yml']));
+    vi.spyOn(FileIo, 'getFile').mockReturnValue(
+      okAsync(
+        Buffer.from(`
+version: 2
+metadata:
+  title: test
+  language: ja
+source:
+  using: markdown
+`),
+      ),
+    );
+    vi.mocked(BookIdentification.decideIdentifier).mockReturnValue(
+      okAsync(BookMetadata({ title: 'test', language: 'ja', identifier: 'id' })),
+    );
+    vi.mocked(loadContents).mockReturnValue(okAsync([]));
+
+    await expect(rejecting(loadProject(dummyPath))).rejects.toMatchObject({
+      type: BookProjectLoaderErrorType.EmptyInputItems,
+      detail: { prjectDir: dummyPath },
     });
   });
 });

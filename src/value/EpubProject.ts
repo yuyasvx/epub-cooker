@@ -1,6 +1,6 @@
 import { PageLayoutType } from '../enums/PageLayoutType';
 import { SourceHandlingType } from '../enums/SourceHandlingType';
-import { IllegalSourceHandlingTypeError } from '../error/IllegalSourceHandlingTypeError';
+import { IllegalBookSourceHandlingTypeError } from '../error/IllegalBookSourceHandlingTypeError';
 import { tryThrows } from '../lib/util/EffectUtil';
 import {
   BookConfiguration,
@@ -13,13 +13,16 @@ import type { ResolvedPath } from './ResolvedPath';
 
 export type BookAdditionalMetadata = { key: string; value: unknown };
 
-export type EpubProject = Readonly<{
+type EpubProjectT = Readonly<{
   projectDir: ResolvedPath;
   metadata: BookMetadata;
   additionalMetadata: BookAdditionalMetadata[];
   config: ReflowLayoutBookConfiguration | FixedLayoutBookConfiguration;
   source: BookSource;
 }>;
+
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface EpubProject extends EpubProjectT {}
 
 export function EpubProject(
   projectDir: ResolvedPath,
@@ -28,9 +31,9 @@ export function EpubProject(
   additionalMetadata: BookAdditionalMetadata[] = [],
   config: ReflowLayoutBookConfiguration | FixedLayoutBookConfiguration = BookConfiguration(),
 ) {
-  return tryThrows<IllegalSourceHandlingTypeError>()(() => {
+  return tryThrows<IllegalBookSourceHandlingTypeError>()(() => {
     if (source.sourceHandlingType === SourceHandlingType.photo && config.layoutType === PageLayoutType.reflow) {
-      throw new IllegalSourceHandlingTypeError(config.layoutType, source.sourceHandlingType);
+      throw new IllegalBookSourceHandlingTypeError(config.layoutType, source.sourceHandlingType);
     }
     return {
       projectDir,

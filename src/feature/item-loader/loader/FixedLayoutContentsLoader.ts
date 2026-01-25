@@ -4,6 +4,6 @@ import { okAsync } from 'neverthrow';
 import type { ContentsLoader } from './ContentsLoader';
 
 /** @internal */
-export const loadFixedLayoutContents: ContentsLoader = function (project, inputFiles, saveTo) {
+export const loadFixedLayoutContents: ContentsLoader<never> = function (project, inputFiles, saveTo) {
   return okAsync([project, []]);
 };

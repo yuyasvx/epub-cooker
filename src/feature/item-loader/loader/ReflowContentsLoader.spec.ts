@@ -10,7 +10,7 @@ import { EpubProject } from '../../../value/EpubProject';
 import { InputFileDetail } from '../../../value/InputFileDetail';
 import { ItemPath } from '../../../value/ItemPath';
 import { type ResolvedPath, resolvePath } from '../../../value/ResolvedPath';
-import { EpubCookerEventType } from '../../event-emitter';
+import { EpubCookerEventCode } from '../../event-emitter';
 import { runAutoEmptyTocItemProcessor } from '../processor/AutoEmptyTocProcessor';
 import { runFileCopyItemProcessor } from '../processor/FileCopyItemProcessor';
 import { runHtmlItemProcessor } from '../processor/HtmlItemProcessor';
@@ -124,7 +124,7 @@ describe('ReflowContentsLoader', () => {
     );
     // 目次がないので自動生成が呼ばれる
     expect(runAutoEmptyTocItemProcessor).toHaveBeenCalled();
-    expect(mockEmit).toHaveBeenCalledWith(EpubCookerEventType.NO_TOC);
+    expect(mockEmit).toHaveBeenCalledWith(EpubCookerEventCode.NO_TOC);
   });
 
   test('指定されたページ順序に従って処理する', async () => {
@@ -287,7 +287,7 @@ describe('ReflowContentsLoader', () => {
 
     // Assert
     expect(mockEmit).toHaveBeenCalledWith(
-      EpubCookerEventType.PAGE_NOT_FOUND,
+      EpubCookerEventCode.PAGE_NOT_FOUND,
       resolvePath(projectRoot, 'contents/missing.md'),
     );
   });

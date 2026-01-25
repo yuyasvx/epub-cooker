@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { EpubCookerError } from '../../../error/EpubCookerError';
+import type { FileIoError } from '../../../lib/file-io/error/FileIoError';
 import * as FileIo from '../../../lib/file-io/FileIo';
 import type { MarkdownParser } from '../../../lib/markdown-parser/MarkdownParser';
 import { tryThrows } from '../../../lib/util/EffectUtil';
@@ -14,7 +14,7 @@ const supportedFileTypes = ['text/markdown'];
 /**
  * @internal
  */
-export const runMarkdownItemProcessor: ItemProcessor<MarkdownParser> = (
+export const runMarkdownItemProcessor: ItemProcessor<MarkdownParser, IllegalFileTypeError | FileIoError> = (
   { filePath, fileType },
   contentsDir,
   saveDir,
@@ -23,7 +23,7 @@ export const runMarkdownItemProcessor: ItemProcessor<MarkdownParser> = (
 ) =>
   tryThrows<IllegalFileTypeError>()(() => {
     if (fileType == null || !supportedFileTypes.includes(fileType)) {
-      throw new IllegalFileTypeError(fileType, supportedFileTypes);
+      throw new IllegalFileTypeError(filePath, fileType, supportedFileTypes);
     }
   })
     .asyncAndThen(() =>
@@ -57,5 +57,4 @@ export const runMarkdownItemProcessor: ItemProcessor<MarkdownParser> = (
     })
     .andThen(({ itemPath, serializedXhtml }) =>
       FileIo.save(resolvePath(saveDir, itemPath), serializedXhtml).map(() => itemPath),
-    )
-    .mapErr((e) => new EpubCookerError('MarkdownItemProcessor', e));
+    );

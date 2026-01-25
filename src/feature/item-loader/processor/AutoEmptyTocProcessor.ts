@@ -1,4 +1,3 @@
-import { EpubCookerError } from '../../../error/EpubCookerError';
 import * as FileIo from '../../../lib/file-io/FileIo';
 import type { MarkdownParser } from '../../../lib/markdown-parser/MarkdownParser';
 import { pipe } from '../../../lib/util/EffectUtil';
@@ -29,5 +28,4 @@ export const runAutoEmptyTocItemProcessor = (saveDir: ResolvedPath, parser: Mark
     })
     .asyncAndThen(({ itemPath, serializedXhtml }) =>
       FileIo.save(resolvePath(saveDir, itemPath), serializedXhtml).map(() => itemPath),
-    )
-    .mapErr((e) => new EpubCookerError('MarkdownItemProcessor', e));
+    );

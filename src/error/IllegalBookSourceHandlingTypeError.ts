@@ -1,12 +1,12 @@
 import type { PageLayoutType } from '../enums/PageLayoutType';
 import type { SourceHandlingType } from '../enums/SourceHandlingType';
-import { EpubCookerError } from './EpubCookerError';
+import { AbstractEpubCookerError } from './AbstractEpubCookerError';
 
-export class IllegalSourceHandlingTypeError extends EpubCookerError {
+export class IllegalBookSourceHandlingTypeError extends AbstractEpubCookerError {
   constructor(
     readonly layoutType: PageLayoutType,
     readonly using: SourceHandlingType,
   ) {
-    super('IllegalSourceHandlingTypeError', undefined);
+    super();
   }
 }

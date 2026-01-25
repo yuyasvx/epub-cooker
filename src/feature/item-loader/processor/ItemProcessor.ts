@@ -1,26 +1,28 @@
 import type { ResultAsync } from 'neverthrow';
 import path from 'node:path';
-import { EpubCookerError } from '../../../error/EpubCookerError';
+import { AbstractEpubCookerError } from '../../../error/AbstractEpubCookerError';
+import type { EpubCookerFeatureError } from '../../../error/EpubCookerFeatureError';
 import type { InputFileDetail } from '../../../value/InputFileDetail';
 import type { ItemPath } from '../../../value/ItemPath';
 import type { ResolvedPath } from '../../../value/ResolvedPath';
 
 /** @internal */
-export type ItemProcessor<T = void> = (
+export type ItemProcessor<T = void, E = EpubCookerFeatureError> = (
   input: InputFileDetail,
   contentsDir: ResolvedPath,
   saveDir: ResolvedPath,
   projectCssPath: string | void,
   processorEngine: T,
-) => ResultAsync<ItemPath, EpubCookerError>;
+) => ResultAsync<ItemPath, E>;
 
 /** @internal */
-export class IllegalFileTypeError extends EpubCookerError {
+export class IllegalFileTypeError extends AbstractEpubCookerError {
   constructor(
-    readonly fileType: string | undefined,
-    readonly allowedTypes: string[],
+    public readonly filePath: string,
+    public readonly fileType: string | undefined,
+    public readonly allowedTypes: string[],
   ) {
-    super('IllegalFileTypeError', undefined);
+    super();
   }
 }
 

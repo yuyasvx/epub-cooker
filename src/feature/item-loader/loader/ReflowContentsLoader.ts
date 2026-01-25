@@ -1,17 +1,18 @@
 import { okAsync, ResultAsync } from 'neverthrow';
 import { PageSpreadPositionType } from '../../../enums/PageSpreadPositionType';
+import type { FileIoError } from '../../../lib/file-io/error/FileIoError';
 import { MarkdownParser } from '../../../lib/markdown-parser/MarkdownParser';
 import { pipe, throwing, unwrap } from '../../../lib/util/EffectUtil';
 import type { BookPageDetail, BookSource } from '../../../value/BookSource';
 import { type InputFileDetail, isPageContent } from '../../../value/InputFileDetail';
 import type { ItemPath } from '../../../value/ItemPath';
 import type { ResolvedPath } from '../../../value/ResolvedPath';
-import { EpubCookerEventType } from '../../event-emitter';
+import { EpubCookerEventCode } from '../../event-emitter';
 import { _getEventEmitter } from '../../event-emitter/InitEvent';
 import { runAutoEmptyTocItemProcessor } from '../processor/AutoEmptyTocProcessor';
 import { runFileCopyItemProcessor } from '../processor/FileCopyItemProcessor';
 import { runHtmlItemProcessor } from '../processor/HtmlItemProcessor';
-import type { ItemProcessor } from '../processor/ItemProcessor';
+import type { IllegalFileTypeError, ItemProcessor } from '../processor/ItemProcessor';
 import { runMarkdownItemProcessor } from '../processor/MarkdownItemProcessor';
 import { runMarkdownTocItemProcessor } from '../processor/MarkdownTocItemProcessor';
 import type { ContentsLoader } from './ContentsLoader';
@@ -19,7 +20,11 @@ import { ProcessedItemType } from './enums/ProcessedItemType';
 import { ProcessedItem } from './value/ProcessedItem';
 
 /** @internal */
-export const loadReflowContents: ContentsLoader = function (project, inputFiles, saveTo) {
+export const loadReflowContents: ContentsLoader<FileIoError | IllegalFileTypeError> = function (
+  project,
+  inputFiles,
+  saveTo,
+) {
   const { source } = project;
   const { contentsDir, cssPath, sourceHandlingType } = source;
 
@@ -35,11 +40,11 @@ export const loadReflowContents: ContentsLoader = function (project, inputFiles,
       ),
     ),
     ...inputsAsAsset.map((input) => {
-      _getEventEmitter().emit(EpubCookerEventType.ITEM_LOADER_NEXT_ITEM, input);
+      _getEventEmitter().emit(EpubCookerEventCode.ITEM_LOADER_NEXT_ITEM, input);
       return runFileCopyItemProcessor(input, contentsDir, saveTo)
         .map((itemPath) => createAssetProcessedItem(itemPath, input))
         .andTee(() => {
-          _getEventEmitter().emit(EpubCookerEventType.ITEM_LOADED);
+          _getEventEmitter().emit(EpubCookerEventCode.ITEM_LOADED);
         });
     }),
   ])
@@ -76,7 +81,7 @@ function customizePageList(inputFileDetails: InputFileDetail[], pages: BookPageD
     .map((p) => {
       const i = itemMap.get(p.pagePath);
       if (i == null) {
-        _getEventEmitter().emit(EpubCookerEventType.PAGE_NOT_FOUND, p.pagePath);
+        _getEventEmitter().emit(EpubCookerEventCode.PAGE_NOT_FOUND, p.pagePath);
       }
       return i;
     })
@@ -97,7 +102,7 @@ function runItemProcessorAsPageContent(
   projectCssPath: string | void,
   parser: MarkdownParser,
 ) {
-  _getEventEmitter().emit(EpubCookerEventType.ITEM_LOADER_NEXT_ITEM, input);
+  _getEventEmitter().emit(EpubCookerEventCode.ITEM_LOADER_NEXT_ITEM, input);
   const { isHtml, isMarkdown, isXhtml, toc } = input;
   // TODO IF式を使いたいだけでこれはオーバーなやり方なきが。。
   const processor = throwing(
@@ -113,10 +118,10 @@ function runItemProcessorAsPageContent(
       }
       return runFileCopyItemProcessor;
     }),
-  ) as ItemProcessor<MarkdownParser>;
+  ) as ItemProcessor<MarkdownParser, FileIoError | IllegalFileTypeError>;
 
   return processor(input, contentsDir, saveTo, projectCssPath, parser).andTee(() => {
-    _getEventEmitter().emit(EpubCookerEventType.ITEM_LOADED);
+    _getEventEmitter().emit(EpubCookerEventCode.ITEM_LOADED);
   });
 }
 
@@ -138,7 +143,7 @@ function createAssetProcessedItem(itemPath: ItemPath, input: InputFileDetail) {
 
 function validateToc(items: ProcessedItem[], saveTo: ResolvedPath, parser: MarkdownParser) {
   if (!items.some((itm) => itm.itemType === ProcessedItemType.TOC_PAGE)) {
-    _getEventEmitter().emit(EpubCookerEventType.NO_TOC);
+    _getEventEmitter().emit(EpubCookerEventCode.NO_TOC);
 
     return runAutoEmptyTocItemProcessor(saveTo, parser).map((itemPath) => [
       ...items,

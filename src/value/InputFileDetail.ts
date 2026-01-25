@@ -10,7 +10,7 @@ export function InputFileDetail(
   filePath: ResolvedPath,
   { contentsDir, coverImagePath, tocPath }: BookSource,
   pageDetail?: BookPageDetail,
-) {
+): InputFileDetail {
   const fileType = unwrap(pipe(mime.lookup(filePath)).map((m) => (m === false ? 'application/octet-stream' : m)));
 
   const isMarkdown = fileType === 'text/markdown';
@@ -31,9 +31,18 @@ export function InputFileDetail(
   };
 }
 
-export type InputFileDetail = ReturnType<typeof InputFileDetail>;
+export interface InputFileDetail {
+  readonly filePath: ResolvedPath;
+  readonly fileType: string;
+  readonly isMarkdown: boolean;
+  readonly isHtml: boolean;
+  readonly isXhtml: boolean;
+  readonly coverImage: boolean;
+  readonly toc: boolean;
+  readonly spreadType: PageSpreadPositionType;
+}
 
-/** internal */
+/** @internal */
 export function isPageContent({ isHtml, isMarkdown, isXhtml }: InputFileDetail, using: SourceHandlingType) {
   if (using === SourceHandlingType.markdown) {
     return isMarkdown || isHtml || isXhtml;
