@@ -1,4 +1,4 @@
-import { EpubCookerError } from '../../../error/EpubCookerError';
+import type { FileIoError } from '../../../lib/file-io/error/FileIoError';
 import * as FileIo from '../../../lib/file-io/FileIo';
 import { tryThrows } from '../../../lib/util/EffectUtil';
 import { changeFileExtension } from '../../../lib/util/FileExtensionUtil';
@@ -11,7 +11,12 @@ const supportedFileTypes = ['text/html', 'application/xhtml+xml'];
 /**
  * @internal
  */
-export const runHtmlItemProcessor: ItemProcessor = ({ filePath, fileType }, contentsDir, saveDir, projectCssPath) =>
+export const runHtmlItemProcessor: ItemProcessor<void, IllegalFileTypeError | FileIoError> = (
+  { filePath, fileType },
+  contentsDir,
+  saveDir,
+  projectCssPath,
+) =>
   tryThrows<IllegalFileTypeError>()(() => {
     if (fileType == null || !supportedFileTypes.includes(fileType)) {
       throw new IllegalFileTypeError(fileType, supportedFileTypes);
@@ -32,5 +37,4 @@ export const runHtmlItemProcessor: ItemProcessor = ({ filePath, fileType }, cont
     })
     .andThen(({ itemPath, serializedXhtml }) =>
       FileIo.save(ItemPath.getDestination(itemPath, saveDir), serializedXhtml).map(() => itemPath),
-    )
-    .mapErr((e) => new EpubCookerError('MarkdownItemProcessor', e));
+    );

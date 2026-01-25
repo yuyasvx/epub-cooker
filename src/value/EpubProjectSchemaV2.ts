@@ -1,11 +1,11 @@
 import { parseISO } from 'date-fns';
-import { z } from 'zod/v4';
+import { z, type ZodError } from 'zod/v4';
 import { PageLayoutType } from '../enums/PageLayoutType';
 import { PageProgressionDirectionType } from '../enums/PageProgressionDirectionType';
 import { PageSizeType } from '../enums/PageSizeType';
 import { PageSpreadPositionType } from '../enums/PageSpreadPositionType';
 import { SourceHandlingType } from '../enums/SourceHandlingType';
-import { ValueGenerationError } from '../error/ValueGenerationError';
+import { BookProjectSchemaParseError } from '../error/BookProjectSchemaParseError';
 import { pipe, tryThrows, unwrap } from '../lib/util/EffectUtil';
 import { BookConfiguration } from './BookConfiguration';
 import { BookMetadata, type UnidentifiedBookMetadata } from './BookMetadata';
@@ -75,8 +75,8 @@ export const epubProjectV2Schema = z.object({
 export type EpubProjectSchemaV2 = Readonly<z.infer<typeof epubProjectV2Schema>>;
 
 export function EpubProjectSchemaV2(value: object) {
-  return tryThrows()(() => epubProjectV2Schema.parse(value)).mapErr(
-    (e) => new ValueGenerationError('EpubProjectV2', e),
+  return tryThrows<ZodError>()(() => epubProjectV2Schema.parse(value)).mapErr(
+    (e) => new BookProjectSchemaParseError(e),
   );
 }
 

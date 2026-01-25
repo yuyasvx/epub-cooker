@@ -1,10 +1,11 @@
 import archiver, { type ArchiverError } from 'archiver';
 import { createWriteStream } from 'node:fs';
-import { rejects } from '../../lib/util/EffectUtil';
+import { tryRejects } from '../../lib/util/EffectUtil';
 import type { BookMetadata } from '../../value/BookMetadata';
 import { type ResolvedPath, resolvePath } from '../../value/ResolvedPath';
 import { EpubCookerEventType } from '../event-emitter';
 import { _getEventEmitter } from '../event-emitter/InitEvent';
+import { BookArchiverError } from './BookArchiverError';
 
 export function archiveDirectory(
   workingDir: ResolvedPath,
@@ -12,15 +13,17 @@ export function archiveDirectory(
   metadata: BookMetadata,
   enabled = true,
 ) {
-  return rejects<ArchiverError>().run(
+  const sanitizedFileName = sanitizeFileName(metadata.title);
+  const destination = resolvePath(saveDir, `${sanitizedFileName}`);
+
+  return tryRejects<ArchiverError>()(
     () =>
       new Promise((resolve, reject) => {
         if (!enabled) {
           return resolve(undefined);
         }
 
-        const sanitizedFileName = sanitizeFileName(metadata.title);
-        const output = createWriteStream(resolvePath(saveDir, `${sanitizedFileName}`));
+        const output = createWriteStream(destination);
         const archive = archiver('zip');
 
         output.on('close', () => {
@@ -42,7 +45,7 @@ export function archiveDirectory(
 
         archive.finalize();
       }),
-  );
+  ).mapErr((e) => new BookArchiverError(workingDir, destination, e));
 }
 
 /**

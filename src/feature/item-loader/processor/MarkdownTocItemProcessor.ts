@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { EpubCookerError } from '../../../error/EpubCookerError';
+import type { FileIoError } from '../../../lib/file-io/error/FileIoError';
 import * as FileIo from '../../../lib/file-io/FileIo';
 import type { MarkdownParser } from '../../../lib/markdown-parser/MarkdownParser';
 import { tryThrows } from '../../../lib/util/EffectUtil';
@@ -14,7 +14,7 @@ const supportedFileTypes = ['text/markdown'];
 /**
  * @internal
  */
-export const runMarkdownTocItemProcessor: ItemProcessor<MarkdownParser> = (
+export const runMarkdownTocItemProcessor: ItemProcessor<MarkdownParser, IllegalFileTypeError | FileIoError> = (
   { filePath, fileType },
   contentsDir,
   saveDir,
@@ -58,8 +58,7 @@ export const runMarkdownTocItemProcessor: ItemProcessor<MarkdownParser> = (
     })
     .andThen(({ itemPath, serializedXhtml }) =>
       FileIo.save(resolvePath(saveDir, itemPath), serializedXhtml).map(() => itemPath),
-    )
-    .mapErr((e) => new EpubCookerError('MarkdownTocItemProcessor', e));
+    );
 
 function addNavElement(htmlText: string) {
   return `<nav epub:type="toc" id="toc">${htmlText}</nav>`;

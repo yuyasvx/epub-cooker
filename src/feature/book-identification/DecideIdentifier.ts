@@ -32,6 +32,6 @@ export function decideIdentifier(projectDir: ResolvedPath, bookMetadata: BookMet
           }
           return err(error);
         })
-        .mapErr((e) => new BookIdentificationError('BookIdentificationError', e));
+        .mapErr((e) => new BookIdentificationError(e.path as ResolvedPath, e));
     });
 }

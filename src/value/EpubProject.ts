@@ -1,6 +1,6 @@
 import { PageLayoutType } from '../enums/PageLayoutType';
 import { SourceHandlingType } from '../enums/SourceHandlingType';
-import { IllegalSourceHandlingTypeError } from '../error/IllegalSourceHandlingTypeError';
+import { IllegalBookSourceHandlingTypeError } from '../error/IllegalBookSourceHandlingTypeError';
 import { tryThrows } from '../lib/util/EffectUtil';
 import {
   BookConfiguration,
@@ -28,9 +28,9 @@ export function EpubProject(
   additionalMetadata: BookAdditionalMetadata[] = [],
   config: ReflowLayoutBookConfiguration | FixedLayoutBookConfiguration = BookConfiguration(),
 ) {
-  return tryThrows<IllegalSourceHandlingTypeError>()(() => {
+  return tryThrows<IllegalBookSourceHandlingTypeError>()(() => {
     if (source.sourceHandlingType === SourceHandlingType.photo && config.layoutType === PageLayoutType.reflow) {
-      throw new IllegalSourceHandlingTypeError(config.layoutType, source.sourceHandlingType);
+      throw new IllegalBookSourceHandlingTypeError(config.layoutType, source.sourceHandlingType);
     }
     return {
       projectDir,

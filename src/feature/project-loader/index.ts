@@ -1,2 +1,2 @@
 export { loadProject } from './LoadProject';
-export { EpubLoadProjectError } from './ProjectLoaderError';
+export { BookProjectLoaderError } from './ProjectLoaderError';

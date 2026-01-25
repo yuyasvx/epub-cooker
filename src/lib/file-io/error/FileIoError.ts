@@ -1,10 +1,10 @@
 import { NodeErrorType } from '../../../enums/NodeJsErrorType';
-import { AbstractError } from '../../../error/AbstractError';
+import { AbstractEpubCookerError } from '../../../error/AbstractEpubCookerError';
 
 /**
  * @internal
  */
-export class FileIoError extends AbstractError {
+export class FileIoError extends AbstractEpubCookerError {
   protected constructor(
     readonly path: string,
     readonly cause?: unknown,

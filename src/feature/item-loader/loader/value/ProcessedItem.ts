@@ -12,7 +12,6 @@ export type ProcessedItem = Readonly<{
   spreadPosition: PageSpreadPositionType;
 }>;
 
-/** @internal */
 export function ProcessedItem(
   itemType: ProcessedItemType,
   itemPath: string,

@@ -1,14 +1,12 @@
 import { err, ok } from 'neverthrow';
 import { beforeEach, describe, expect, type Mock, test, vi } from 'vitest';
 import { NodeErrorType } from '../../../enums/NodeJsErrorType';
-import { EpubCookerError } from '../../../error/EpubCookerError';
 import { FileIoError } from '../../../lib/file-io/error/FileIoError';
 import * as FileIo from '../../../lib/file-io/FileIo';
 import { MarkdownParser } from '../../../lib/markdown-parser/MarkdownParser';
 import { BookSource } from '../../../value/BookSource';
 import { InputFileDetail } from '../../../value/InputFileDetail';
 import { type ResolvedPath, resolvePath } from '../../../value/ResolvedPath';
-import { IllegalFileTypeError } from './ItemProcessor';
 import { runMarkdownItemProcessor } from './MarkdownItemProcessor';
 
 // Mock dependencies
@@ -69,9 +67,7 @@ describe('MarkdownItemProcessor', () => {
       parser,
     );
 
-    const error = result._unsafeUnwrapErr();
-    expect(error).toBeInstanceOf(EpubCookerError);
-    expect(error.cause).toBeInstanceOf(IllegalFileTypeError);
+    expect(result.isErr()).toBe(true);
   });
 
   test('ファイル読み込みが失敗したらエラー', async () => {
@@ -87,7 +83,6 @@ describe('MarkdownItemProcessor', () => {
     );
 
     expect(result.isErr()).toBe(true);
-    expect(result._unsafeUnwrapErr()).toBeInstanceOf(EpubCookerError);
   });
 
   test('ファイル書き込みが失敗したらエラー', async () => {
@@ -105,6 +100,5 @@ describe('MarkdownItemProcessor', () => {
     );
 
     expect(result.isErr()).toBe(true);
-    expect(result._unsafeUnwrapErr()).toBeInstanceOf(EpubCookerError);
   });
 });

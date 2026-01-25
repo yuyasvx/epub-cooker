@@ -7,6 +7,7 @@ import type { BookAdditionalMetadata } from '../../value/EpubProject';
 import { ItemPath } from '../../value/ItemPath';
 import type { ResolvedPath } from '../../value/ResolvedPath';
 import type { ProcessedItem } from '../item-loader/loader/value/ProcessedItem';
+import { BookMetadataGeneratorError } from './BookMetadataGeneratorError';
 import { ContainerMarkupStructure } from './value/ContainerMarkupStructure';
 import { IBooksDisplayOptionsMarkupStructure } from './value/IBooksDisplayOptionsMarkupStructure';
 import { PackageOpfMarkupStructure } from './value/PackageOpfMarkupStructure';
@@ -30,11 +31,13 @@ export function saveMarkupStructure(
     doSave(containerMarkup, saveDir),
     doSave(iBooksMarkup, saveDir),
     doSave(packageMarkup, saveDir),
-  ]).map(() => ({
-    bookMetadata,
-    bookConfig,
-    bookAdditionalMetadata,
-  }));
+  ])
+    .map(() => ({
+      bookMetadata,
+      bookConfig,
+      bookAdditionalMetadata,
+    }))
+    .mapErr((e) => new BookMetadataGeneratorError(e.path, e));
 }
 
 function doSave(markup: XmlStructure, saveDir: ResolvedPath) {

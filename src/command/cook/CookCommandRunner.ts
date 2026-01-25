@@ -13,6 +13,7 @@ import { loadProject } from '../../feature/project-loader';
 import * as FileIo from '../../lib/file-io/FileIo';
 import { tryThrows } from '../../lib/util/EffectUtil';
 import { type ResolvedPath, resolvePath } from '../../value/ResolvedPath';
+import { handleError } from './HandleError';
 import { prepareCook } from './PrepareCook';
 
 /**
@@ -33,7 +34,10 @@ export function cook(projectDir: ResolvedPath, noPack = false) {
     .andThen(({ bookMetadata }) => archiveDirectory(workingDir, projectDir, bookMetadata, !noPack))
     .andThen(() => finalizeProcessedFiles(workingDir, noPack))
     .andTee(() => finalize())
-    .orTee(() => finalize());
+    .orTee((e) => {
+      handleError(e);
+      finalize();
+    });
 }
 
 function finalizeProcessedFiles(workingDir: ResolvedPath, keepWorkingContents = false) {

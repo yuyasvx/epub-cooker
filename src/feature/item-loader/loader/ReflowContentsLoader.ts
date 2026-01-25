@@ -1,5 +1,6 @@
 import { okAsync, ResultAsync } from 'neverthrow';
 import { PageSpreadPositionType } from '../../../enums/PageSpreadPositionType';
+import type { FileIoError } from '../../../lib/file-io/error/FileIoError';
 import { MarkdownParser } from '../../../lib/markdown-parser/MarkdownParser';
 import { pipe, throwing, unwrap } from '../../../lib/util/EffectUtil';
 import type { BookPageDetail, BookSource } from '../../../value/BookSource';
@@ -11,7 +12,7 @@ import { _getEventEmitter } from '../../event-emitter/InitEvent';
 import { runAutoEmptyTocItemProcessor } from '../processor/AutoEmptyTocProcessor';
 import { runFileCopyItemProcessor } from '../processor/FileCopyItemProcessor';
 import { runHtmlItemProcessor } from '../processor/HtmlItemProcessor';
-import type { ItemProcessor } from '../processor/ItemProcessor';
+import type { IllegalFileTypeError, ItemProcessor } from '../processor/ItemProcessor';
 import { runMarkdownItemProcessor } from '../processor/MarkdownItemProcessor';
 import { runMarkdownTocItemProcessor } from '../processor/MarkdownTocItemProcessor';
 import type { ContentsLoader } from './ContentsLoader';
@@ -19,7 +20,11 @@ import { ProcessedItemType } from './enums/ProcessedItemType';
 import { ProcessedItem } from './value/ProcessedItem';
 
 /** @internal */
-export const loadReflowContents: ContentsLoader = function (project, inputFiles, saveTo) {
+export const loadReflowContents: ContentsLoader<FileIoError | IllegalFileTypeError> = function (
+  project,
+  inputFiles,
+  saveTo,
+) {
   const { source } = project;
   const { contentsDir, cssPath, sourceHandlingType } = source;
 
@@ -113,7 +118,7 @@ function runItemProcessorAsPageContent(
       }
       return runFileCopyItemProcessor;
     }),
-  ) as ItemProcessor<MarkdownParser>;
+  ) as ItemProcessor<MarkdownParser, FileIoError | IllegalFileTypeError>;
 
   return processor(input, contentsDir, saveTo, projectCssPath, parser).andTee(() => {
     _getEventEmitter().emit(EpubCookerEventType.ITEM_LOADED);
