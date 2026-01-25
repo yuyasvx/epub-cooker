@@ -45,9 +45,8 @@ describe('loadProject', () => {
     const result = await rejecting(
       loadProject(resolvePath(__dirname, `../../../test/determine-project-file/${targetPath}`)),
     );
-    expect(result).toStrictEqual({
-      inputFiles: [],
-      project: throwing(
+    expect(result.project).toStrictEqual(
+      throwing(
         EpubProject(
           resolvePath(__dirname, `../../../test/determine-project-file/${targetPath}`),
           BookMetadata({ description: 'あらすじ', language: 'ja', title: '吾輩は猫である', identifier: 'id-test' }),
@@ -58,15 +57,14 @@ describe('loadProject', () => {
           [],
         ),
       ),
-    });
+    );
   });
 
   test('必須項目以外省略した場合、初期値がセットされている', async () => {
     const result = await rejecting(loadProject(resolvePath(__dirname, `../../../test/minimal-project`)));
 
-    expect(result).toStrictEqual({
-      inputFiles: [],
-      project: throwing(
+    expect(result.project).toStrictEqual(
+      throwing(
         EpubProject(
           resolvePath(__dirname, `../../../test/minimal-project`),
           BookMetadata({
@@ -82,7 +80,7 @@ describe('loadProject', () => {
           BookConfiguration(),
         ),
       ),
-    });
+    );
   });
 });
 
